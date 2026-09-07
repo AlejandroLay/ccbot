@@ -63,6 +63,10 @@ bloquea las IPs de GitHub: el runner recibe el listado igual que tu Mac.
 Para lanzarlo a mano: pestaña **Actions → ccbot → Run workflow**. Ahí tienes también la
 casilla `seed`, que marca todo como visto sin avisar (úsala al añadir una búsqueda).
 
+> **Antes de tocar nada en local, haz `git pull --rebase`.** El bot hace commits desde
+> la nube cada vez que cambia el estado, así que tu copia se queda atrás enseguida y el
+> push te lo rechazará.
+
 El cron de GitHub es orientativo: en el plan gratuito se retrasa a menudo 10-20 minutos.
 Si algún día quieres inmediatez, el `launchd` del Mac sigue disponible (ver más abajo),
 pero **no ejecutes los dos a la vez**: llevan estados separados y recibirías los avisos
