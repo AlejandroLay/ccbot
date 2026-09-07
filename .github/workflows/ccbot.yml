@@ -1,0 +1,55 @@
+name: ccbot
+
+on:
+  schedule:
+    # cada 30 minutos. Ojo: el cron de GitHub Actions es orientativo y en el
+    # plan gratuito se retrasa con frecuencia 10-20 minutos.
+    - cron: "*/30 * * * *"
+  workflow_dispatch:      # permite lanzarlo a mano desde la web
+    inputs:
+      seed:
+        description: "Marcar todo como visto SIN avisar"
+        type: boolean
+        default: false
+
+# Si una ejecucion se solapa con la anterior, se descarta la nueva: dos
+# procesos escribiendo el mismo estado se pisarian.
+concurrency:
+  group: ccbot
+  cancel-in-progress: false
+
+jobs:
+  vigilar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write     # necesario para guardar el estado con un commit
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install --quiet curl_cffi beautifulsoup4
+
+      - name: Ejecutar el bot
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python cc_bot.py ${{ (github.event_name == 'workflow_dispatch' && inputs.seed) && '--seed' || '' }}
+
+      - name: Guardar el estado
+        # se ejecuta aunque el bot falle: si una busqueda va bien y otra no,
+        # no queremos perder lo que si se ha visto
+        if: always()
+        run: |
+          # Latido: cambia una vez al dia, asi que genera como minimo un commit
+          # diario. Sin el, un repo tranquilo dos meses hace que GitHub
+          # desactive solo los workflows programados.
+          date -u +%Y-%m-%d > state/_latido.txt
+          git config user.name "ccbot"
+          git config user.email "ccbot@users.noreply.github.com"
+          git add state/
+          git diff --staged --quiet || git commit -m "Estado: $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git push

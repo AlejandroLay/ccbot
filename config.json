@@ -1,0 +1,27 @@
+{
+  "busquedas": [
+    {
+      "nombre": "ps5-pro",
+      "url": "https://www.cashconverters.es/es/es/search/?q=ps5+pro&lang=es&sz=48",
+      "activa": true,
+      "keywords_todas": ["ps5"],
+      "keywords_ninguna": [
+        "mando", "funda", "cable", "soporte", "skater", "stand", "vertical",
+        "volante", "accesorios", "nacon", "razer", "juego", "auriculares"
+      ],
+      "precio_max": 450
+    },
+    {
+      "nombre": "macbook-air-m4",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m4&lang=es&sz=500",
+      "activa": true,
+      "_nota": "El buscador ignora el token 'm4' y devuelve 300 MacBook antiguos. En vez de exigir 'm4' en el titulo (fallaria en silencio si lo titulan sin el chip), se descartan los chips viejos conocidos: pasa cualquier MacBook Air que NO sea Intel, M1, M2 ni M3.",
+      "keywords_todas": ["macbook air"],
+      "keywords_ninguna": [
+        "core i", "core 2", "m1", "m2", "m3",
+        "funda", "cargador", "cable", "adaptador", "teclado", "carcasa",
+        "bateria", "magic", "raton"
+      ]
+    }
+  ]
+}

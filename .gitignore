@@ -1,0 +1,7 @@
+.env
+# state/ SI se versiona: es la memoria del bot entre ejecuciones de GitHub Actions
+*.log
+debug*
+.venv/
+__pycache__/
+.pytest_cache/
