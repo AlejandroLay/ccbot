@@ -325,14 +325,21 @@ def pasa_filtros(item: dict, busqueda: dict) -> bool:
     titulo = normalizar(item["titulo"])
     todas = [normalizar(k) for k in busqueda.get("keywords_todas") or []]
     ninguna = [normalizar(k) for k in busqueda.get("keywords_ninguna") or []]
+    precio_min = busqueda.get("precio_min")
     precio_max = busqueda.get("precio_max")
 
     if todas and not all(k in titulo for k in todas):
         return False
     if ninguna and any(k in titulo for k in ninguna):
         return False
-    if precio_max is not None and item["precio"] is not None and item["precio"] > precio_max:
-        return False
+
+    # Un producto sin precio legible NUNCA se descarta por precio: mejor un
+    # aviso de mas que perderse el bueno por no saber cuanto cuesta.
+    if item["precio"] is not None:
+        if precio_min is not None and item["precio"] < precio_min:
+            return False
+        if precio_max is not None and item["precio"] > precio_max:
+            return False
     return True
 
 

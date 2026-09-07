@@ -4,23 +4,41 @@
       "nombre": "ps5-pro",
       "url": "https://www.cashconverters.es/es/es/search/?q=ps5+pro&lang=es&sz=48",
       "activa": true,
-      "keywords_todas": ["ps5"],
-      "keywords_ninguna": [
-        "mando", "funda", "cable", "soporte", "skater", "stand", "vertical",
-        "volante", "accesorios", "nacon", "razer", "juego", "auriculares"
+      "keywords_todas": [
+        "ps5"
       ],
-      "precio_max": 450
+      "keywords_ninguna": [
+        "volante",
+        "monitor",
+        "televisor",
+        "portatil"
+      ],
+      "_nota": "Una PS5 Pro cuesta 800+, asi que el filtro de verdad es el precio minimo: todo lo barato (mandos, juegos, fundas) cae solo. La lista de exclusiones se queda corta a proposito para no descartar packs del tipo 'consola + mando'.",
+      "precio_min": 700
     },
     {
       "nombre": "macbook-air-m4",
       "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m4&lang=es&sz=500",
       "activa": true,
       "_nota": "El buscador ignora el token 'm4' y devuelve 300 MacBook antiguos. En vez de exigir 'm4' en el titulo (fallaria en silencio si lo titulan sin el chip), se descartan los chips viejos conocidos: pasa cualquier MacBook Air que NO sea Intel, M1, M2 ni M3.",
-      "keywords_todas": ["macbook air"],
+      "keywords_todas": [
+        "macbook air"
+      ],
       "keywords_ninguna": [
-        "core i", "core 2", "m1", "m2", "m3",
-        "funda", "cargador", "cable", "adaptador", "teclado", "carcasa",
-        "bateria", "magic", "raton"
+        "core i",
+        "core 2",
+        "m1",
+        "m2",
+        "m3",
+        "funda",
+        "cargador",
+        "cable",
+        "adaptador",
+        "teclado",
+        "carcasa",
+        "bateria",
+        "magic",
+        "raton"
       ]
     }
   ]

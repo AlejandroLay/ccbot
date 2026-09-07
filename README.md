@@ -2,7 +2,8 @@
 
 Vigila búsquedas concretas de [cashconverters.es](https://www.cashconverters.es) y avisa
 por un webhook de Discord cuando aparece un producto nuevo que encaja con tus filtros.
-Sin servicios de pago, sin nube: se ejecuta en tu Mac cada 10 minutos con `launchd`.
+Coste cero: se ejecuta en GitHub Actions cada 30 minutos, sin depender de que tengas
+el ordenador encendido. También puede correr en tu Mac con `launchd` (ver abajo).
 
 ## Cómo funciona
 
@@ -14,7 +15,7 @@ Sin servicios de pago, sin nube: se ejecuta en tu Mac cada 10 minutos con `launc
 3. Aplica tus filtros locales sobre el título (minúsculas y sin acentos).
 4. Compara con `state/<busqueda>.json` y avisa por Discord solo de lo que no había visto.
 
-## Puesta en marcha
+## Puesta en marcha en local (opcional)
 
 ```bash
 cd ~/ccbot
@@ -96,8 +97,8 @@ por duplicado.
       "url": "https://www.cashconverters.es/es/es/search/?q=ps5+pro&lang=es&sz=48",
       "activa": true,
       "keywords_todas": ["ps5"],
-      "keywords_ninguna": ["mando", "funda", "cable", "soporte", "skater"],
-      "precio_max": 450
+      "keywords_ninguna": ["volante", "monitor", "televisor", "portatil"],
+      "precio_min": 700
     }
   ]
 }
@@ -108,9 +109,14 @@ por duplicado.
 - `activa`: ponlo a `false` para desactivarla sin borrarla.
 - `keywords_todas`: **todas** deben aparecer en el título.
 - `keywords_ninguna`: si aparece **alguna**, se descarta.
-- `precio_max`: descarta lo que cueste más. Si un producto no trae precio legible, se
-  avisa igualmente (mejor un aviso de más que perderse una ganga).
-- Los tres filtros son opcionales: omítelos y no se aplican. Se comparan sin acentos y
+- `precio_max`: descarta lo que cueste más.
+- `precio_min`: descarta lo que cueste menos. Útil cuando lo barato *es* el ruido: una
+  PS5 Pro cuesta 800 € y pico, así que con `"precio_min": 700` caen solos los mandos,
+  los juegos y las fundas sin necesidad de listarlos uno a uno en `keywords_ninguna`.
+  Los dos juntos definen una horquilla.
+- Si un producto no trae precio legible **no se descarta por precio**, ni por arriba ni
+  por abajo: mejor un aviso de más que perderse una ganga.
+- Todos los filtros son opcionales: omítelos y no se aplican. Se comparan sin acentos y
   en minúsculas, así que `portatil` casa con `Portátil`.
 
 4. Lanza `python cc_bot.py --seed --solo <nombre>` para no recibir de golpe todo el

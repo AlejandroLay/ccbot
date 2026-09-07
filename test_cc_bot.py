@@ -356,3 +356,27 @@ def test_fallo_de_descarga_devuelve_fallo(entorno, monkeypatch):
 
 def test_hay_nuevos_pero_falta_webhook_devuelve_fallo(entorno):
     assert cc_bot.procesar_busqueda(BUSQUEDA, "", False, False) is False
+
+
+# ---------------------------------------------------------------------------
+# precio_min: para cosas como la PS5 Pro, donde lo barato es ruido
+# ---------------------------------------------------------------------------
+
+def test_precio_min_descarta_lo_barato():
+    busqueda = {"precio_min": 700}
+    assert cc_bot.pasa_filtros(_item("Consola PS5 Pro", 849.0), busqueda)
+    assert cc_bot.pasa_filtros(_item("Consola PS5 Pro", 700.0), busqueda)   # el limite entra
+    assert not cc_bot.pasa_filtros(_item("Mando PS5", 26.95), busqueda)
+
+
+def test_precio_min_y_max_a_la_vez_definen_una_horquilla():
+    busqueda = {"precio_min": 700, "precio_max": 1000}
+    assert cc_bot.pasa_filtros(_item("Consola PS5 Pro", 849.0), busqueda)
+    assert not cc_bot.pasa_filtros(_item("Consola PS5 Pro", 650.0), busqueda)
+    assert not cc_bot.pasa_filtros(_item("Consola PS5 Pro", 1200.0), busqueda)
+
+
+def test_sin_precio_legible_no_se_descarta_por_precio():
+    """Preferimos un aviso de mas a perdernos el bueno por no saber el precio."""
+    assert cc_bot.pasa_filtros(_item("Consola PS5 Pro", None), {"precio_min": 700})
+    assert cc_bot.pasa_filtros(_item("Consola PS5 Pro", None), {"precio_max": 450})
