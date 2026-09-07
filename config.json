@@ -59,6 +59,26 @@
         "carcasa",
         "bateria"
       ]
+    },
+    {
+      "nombre": "macbook-air-m3",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m3&lang=es&sz=48",
+      "activa": true,
+      "_nota": "Exigir 'macbook air' descarta los MacBook Pro M3 y, sobre todo, el MacBook de 2017 con procesador Intel 'core m3', que no tiene nada que ver con el chip M3 de Apple.",
+      "keywords_todas": [
+        "macbook air",
+        "m3"
+      ],
+      "keywords_ninguna": [
+        "core m3",
+        "funda",
+        "cargador",
+        "cable",
+        "adaptador",
+        "teclado",
+        "carcasa",
+        "bateria"
+      ]
     }
   ]
 }

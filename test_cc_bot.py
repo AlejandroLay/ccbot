@@ -542,3 +542,49 @@ def test_sin_estado_no_se_pinta_ese_campo():
     item = {"id": "1", "titulo": "x", "precio": 10.0, "precio_antes": None,
             "estado": None, "url": "u", "imagen": None}
     assert "Estado" not in {c["name"] for c in _embed(item)["fields"]}
+
+
+# ---------------------------------------------------------------------------
+# M2 y M3: el ruido real de esas busquedas son los Mac mini, los MacBook Pro
+# y el MacBook de 2017 con procesador Intel "core m3".
+# ---------------------------------------------------------------------------
+
+BUSQUEDA_M3 = {
+    "keywords_todas": ["macbook air", "m3"],
+    "keywords_ninguna": ["core m3", "funda", "cargador", "cable",
+                         "adaptador", "teclado", "carcasa", "bateria"],
+}
+BUSQUEDA_M2 = {
+    "keywords_todas": ["macbook air", "m2"],
+    "keywords_ninguna": ["funda", "cargador", "cable", "adaptador",
+                         "teclado", "carcasa", "bateria"],
+}
+
+
+def test_avisa_del_macbook_air_m3():
+    titulo = "portatil apple apple macbook air m3 8-core 4.0 13 (10gpu) (2024) (a3113)"
+    assert cc_bot.pasa_filtros(_item(titulo, 999.0), BUSQUEDA_M3)
+
+
+@pytest.mark.parametrize("titulo", [
+    "portatil apple apple macbook core m3 1.2 12 (2017) (a1534)",       # Intel, no chip M3
+    "portatil apple apple macbook pro m3 8-core 4.0 14 (10gpu) (2023)",
+    "portatil apple apple macbook pro m3 pro 12-core 4.0 16 (18gpu)",
+    "portatil apple apple macbook air m2 8-core 3.4 13 (8gpu) (2022) (a2681)",
+])
+def test_descarta_el_ruido_de_la_busqueda_m3(titulo):
+    assert not cc_bot.pasa_filtros(_item(titulo, 500.0), BUSQUEDA_M3)
+
+
+def test_avisa_del_macbook_air_m2():
+    titulo = "portatil apple apple macbook air m2 8-core 3.4 13 (8gpu) (2022) (a2681)"
+    assert cc_bot.pasa_filtros(_item(titulo, 649.94), BUSQUEDA_M2)
+
+
+@pytest.mark.parametrize("titulo", [
+    "ordenador apple apple mac mini m2 3.4/8 (10gpu)(2023)(a2686)",
+    "portatil apple apple macbook pro m2 8-core 3.4 13 (8gpu) (2022)",
+    "portatil apple apple macbook pro m2 max 12-core 3.6 14 (30gpu)(2023)",
+])
+def test_descarta_mac_mini_y_pro_en_la_busqueda_m2(titulo):
+    assert not cc_bot.pasa_filtros(_item(titulo, 500.0), BUSQUEDA_M2)
