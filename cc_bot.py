@@ -184,8 +184,37 @@ def _desde_tiles(html: str) -> list[dict]:
 
 
 def _precio_de_tile(tile):
-    """Coge el precio de venta actual (.sales), ignorando el tachado
-    (.strike-through) que muestra el precio anterior."""
+    """Precio de venta ACTUAL, que en un producto rebajado no es el que canta.
+
+    La maquetacion real de cashconverters.es es esta:
+
+        <div class="old-price">Antes <del>1.008,95 €</del></div>
+        <div class="principal" data-price="968.95">968,95 €</div>
+
+    O sea que hay que quedarse con .principal e ignorar el <del>. El atributo
+    data-price viene ya normalizado (punto decimal), asi que es la fuente
+    preferida; lo demas son planes B por si cambian la plantilla.
+    """
+    # 1. Lo mejor: el atributo data-price de .principal
+    nodo = tile.select_one(".principal[data-price]")
+    if nodo is not None:
+        valor = _a_float(nodo["data-price"])
+        if valor is not None:
+            return valor
+
+    # 2. El texto de .principal
+    nodo = tile.select_one(".principal")
+    if nodo is not None:
+        valor = _a_float(nodo.get_text(" ", strip=True))
+        if valor is not None:
+            return valor
+
+    # 3. El JSON de analitica que la propia web mete en el tile
+    valor = _precio_de_datalayer(tile)
+    if valor is not None:
+        return valor
+
+    # 4. Maquetacion estandar de SFRA, por si volvieran a ella
     nodo = tile.select_one(".sales .value, .sales")
     if nodo is not None:
         if nodo.get("content"):
@@ -196,18 +225,39 @@ def _precio_de_tile(tile):
         if valor is not None:
             return valor
 
-    # Plan B: primer importe en euros que no este dentro de un tachado
-    for nodo in tile.find_all(string=re.compile(r"\d[\d.,]*\s*€")):
-        padre = nodo.parent
-        if padre and any(
-            "strike" in c or "line-through" in c
-            for c in (padre.get("class") or [])
-        ):
+    # 5. Ultimo recurso: el primer importe en euros que no sea un precio viejo
+    for texto in tile.find_all(string=re.compile(r"\d[\d.,]*\s*€")):
+        if _es_precio_viejo(texto.parent):
             continue
-        valor = _a_float(str(nodo))
+        valor = _a_float(str(texto))
         if valor is not None:
             return valor
     return None
+
+
+def _precio_de_datalayer(tile):
+    """La web incrusta en cada tile un JSON de analitica con el precio bueno:
+    data-product-datalayer='{"id":"...","price":968.95,...}'."""
+    crudo = tile.get("data-product-datalayer")
+    if not crudo:
+        return None
+    try:
+        return _a_float(json.loads(crudo).get("price"))
+    except (json.JSONDecodeError, AttributeError):
+        return None
+
+
+def _es_precio_viejo(nodo) -> bool:
+    """True si el importe cuelga de un tachado: <del>, .old-price,
+    .strike-through... Son el precio de antes del descuento."""
+    while nodo is not None and getattr(nodo, "name", None):
+        if nodo.name in ("del", "s", "strike"):
+            return True
+        clases = " ".join(nodo.get("class") or [])
+        if "old-price" in clases or "strike" in clases or "line-through" in clases:
+            return True
+        nodo = nodo.parent
+    return False
 
 
 def _imagen_de_tile(tile):

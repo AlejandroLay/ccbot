@@ -380,3 +380,82 @@ def test_sin_precio_legible_no_se_descarta_por_precio():
     """Preferimos un aviso de mas a perdernos el bueno por no saber el precio."""
     assert cc_bot.pasa_filtros(_item("Consola PS5 Pro", None), {"precio_min": 700})
     assert cc_bot.pasa_filtros(_item("Consola PS5 Pro", None), {"precio_max": 450})
+
+
+# ---------------------------------------------------------------------------
+# Precio con la maquetacion REAL de cashconverters.es
+#
+# Los tests de arriba usaban las clases estandar de SFRA (.sales /
+# .strike-through), que la web NO usa. Por eso pasaban en verde mientras el
+# bot leia el precio de ANTES del descuento. Estos fixtures estan copiados
+# del HTML de verdad.
+# ---------------------------------------------------------------------------
+
+TILE_REAL_REBAJADO = """
+<div class="product-tile" data-pid="CC048_E595031_0"
+     data-product-datalayer='{"id":"CC048_E595031_0","name":"volante ps5 logitech pro g wheel","price":968.95}'>
+  <div class="tag-box"><span class="product-discount">-4%</span></div>
+  <div class="pdp-link"><a class="link" href="/es/es/segunda-mano/CC048_E595031_0.html">volante ps5 logitech pro g wheel</a></div>
+  <div class="price">
+    <div class="old-price">Antes <del>1.008,95 €</del></div>
+    <div class="principal" data-price="968.95">968,95 €</div>
+  </div>
+</div>
+"""
+
+TILE_REAL_SIN_REBAJA = """
+<div class="product-tile" data-pid="CC021_E826122_0"
+     data-product-datalayer='{"id":"CC021_E826122_0","name":"mando ps5 razer","price":104.95}'>
+  <div class="pdp-link"><a class="link" href="/es/es/segunda-mano/CC021_E826122_0.html">mando ps5 razer wolverine v2 pro</a></div>
+  <div class="price"><div class="principal" data-price="104.95">104,95 €</div></div>
+</div>
+"""
+
+
+def test_producto_rebajado_devuelve_el_precio_con_descuento():
+    """El fallo que reporto el usuario: el bot daba 1008,95 en vez de 968,95."""
+    items = cc_bot.extraer_productos(_pagina(TILE_REAL_REBAJADO))
+    assert items[0]["precio"] == 968.95
+
+
+def test_producto_sin_rebaja_lee_su_precio_normal():
+    items = cc_bot.extraer_productos(_pagina(TILE_REAL_SIN_REBAJA))
+    assert items[0]["precio"] == 104.95
+
+
+def test_sin_data_price_se_lee_del_texto_de_principal():
+    tile = TILE_REAL_REBAJADO.replace(' data-price="968.95"', "")
+    items = cc_bot.extraer_productos(_pagina(tile))
+    assert items[0]["precio"] == 968.95
+
+
+def test_sin_principal_se_cae_al_json_de_analitica():
+    tile = TILE_REAL_REBAJADO.replace('class="principal"', 'class="oculto"')
+    items = cc_bot.extraer_productos(_pagina(tile))
+    assert items[0]["precio"] == 968.95
+
+
+def test_ultimo_recurso_ignora_el_importe_tachado():
+    """Sin data-price, sin .principal y sin JSON: solo queda leer el texto,
+    y ahi hay que saltarse el <del> del precio viejo."""
+    tile = """
+    <div class="product-tile" data-pid="X1">
+      <div class="pdp-link"><a href="/p/x1.html">Consola PS5 Pro</a></div>
+      <div class="price">
+        <div class="old-price">Antes <del>1.008,95 €</del></div>
+        <div class="otra-clase">968,95 €</div>
+      </div>
+    </div>
+    """
+    items = cc_bot.extraer_productos(_pagina(tile))
+    assert items[0]["precio"] == 968.95
+
+
+def test_el_precio_viejo_no_se_cuela_por_ninguna_via():
+    """Blindaje: pase lo que pase, 1008.95 nunca puede salir de este tile."""
+    for variante in (
+        TILE_REAL_REBAJADO,
+        TILE_REAL_REBAJADO.replace(' data-price="968.95"', ""),
+        TILE_REAL_REBAJADO.replace('class="principal"', 'class="oculto"'),
+    ):
+        assert cc_bot.extraer_productos(_pagina(variante))[0]["precio"] != 1008.95

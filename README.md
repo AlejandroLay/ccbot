@@ -12,8 +12,10 @@ el ordenador encendido. También puede correr en tu Mac con `launchd` (ver abajo
 2. Extrae los productos de los *tiles* de Salesforce Commerce Cloud: cada uno es un
    elemento con `data-pid`, y ese pid (p. ej. `CC002_E882562_0`) es el identificador
    estable que se usa para deduplicar, **no la URL**.
-3. Aplica tus filtros locales sobre el título (minúsculas y sin acentos).
-4. Compara con `state/<busqueda>.json` y avisa por Discord solo de lo que no había visto.
+3. Coge el precio **con descuento aplicado** (`.principal[data-price]`), no el
+   tachado de antes de la rebaja.
+4. Aplica tus filtros locales sobre el título (minúsculas y sin acentos).
+5. Compara con `state/<busqueda>.json` y avisa por Discord solo de lo que no había visto.
 
 ## Puesta en marcha en local (opcional)
 
@@ -178,7 +180,10 @@ no te llega el catálogo entero como si fuera nuevo. Diagnóstico, en orden:
 2. **Si hay `data-pid` pero el bot extrae 0** → cambió la maquetación. Todo el scraping
    vive en la sección `2. EXTRACCION` de `cc_bot.py`, en funciones pequeñas:
    - `_desde_tiles()`: qué elemento es un producto y de dónde sale el título.
-   - `_precio_de_tile()`: precio vigente (`.sales`) ignorando el tachado (`.strike-through`).
+   - `_precio_de_tile()`: precio vigente. **Ojo con las rebajas**: la web pinta
+     `<div class="old-price">Antes <del>1.008,95 €</del></div>` y debajo
+     `<div class="principal" data-price="968.95">968,95 €</div>`. Hay que quedarse con
+     `.principal` (su `data-price` viene ya normalizado) e ignorar el `<del>`.
    - `_imagen_de_tile()`: imagen, incluido el *lazy load* en `data-src`.
 
    Abre `debug_*.html`, busca un producto, ajusta los selectores y lanza `pytest`.
