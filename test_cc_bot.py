@@ -588,3 +588,34 @@ def test_avisa_del_macbook_air_m2():
 ])
 def test_descarta_mac_mini_y_pro_en_la_busqueda_m2(titulo):
     assert not cc_bot.pasa_filtros(_item(titulo, 500.0), BUSQUEDA_M2)
+
+
+# ---------------------------------------------------------------------------
+# iPad Pro M5: aqui el buscador si respeta el token, pero el chip aparece con
+# dos formatos distintos en los titulos reales.
+# ---------------------------------------------------------------------------
+
+BUSQUEDA_IPAD = {
+    "keywords_todas": ["ipad pro", "m5"],
+    "keywords_ninguna": ["funda", "pencil", "cargador", "cable",
+                         "adaptador", "carcasa", "protector"],
+}
+
+
+@pytest.mark.parametrize("titulo", [
+    "ipad apple ipad pro m5 (wi-fi) (a3357) (11,0) 256gb",
+    "ipad apple ipad pro m5 (wi-fi+5g) (a3361) (a3362) (13,0) 256gb",
+    "ipad apple ipad pro 13-inch (m5)",          # el chip entre parentesis
+])
+def test_avisa_de_los_ipad_pro_m5(titulo):
+    assert cc_bot.pasa_filtros(_item(titulo, 1310.95), BUSQUEDA_IPAD)
+
+
+@pytest.mark.parametrize("titulo", [
+    "ipad apple ipad air m3 (wi-fi+5g) (a3269) (a3271) (13,0) 256gb",  # Air, no Pro
+    "ipad apple ipad pro m4 (wi-fi) (a2836) (13,0) 256gb",             # generacion anterior
+    "funda ipad pro m5 apple smart folio",
+    "pencil apple pencil pro ipad pro m5",
+])
+def test_descarta_el_ruido_de_la_busqueda_de_ipad(titulo):
+    assert not cc_bot.pasa_filtros(_item(titulo, 200.0), BUSQUEDA_IPAD)

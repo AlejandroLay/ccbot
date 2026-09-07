@@ -79,6 +79,25 @@
         "carcasa",
         "bateria"
       ]
+    },
+    {
+      "nombre": "ipad-pro-m5",
+      "url": "https://www.cashconverters.es/es/es/search/?q=ipad+pro+m5&lang=es&sz=48",
+      "activa": true,
+      "_nota": "Aqui el buscador SI respeta el token m5: los 12 resultados son iPad Pro M5 reales. Ojo con el formato del chip, que varia: 'ipad pro m5 (wi-fi)' y tambien 'ipad pro 13-inch (m5)'.",
+      "keywords_todas": [
+        "ipad pro",
+        "m5"
+      ],
+      "keywords_ninguna": [
+        "funda",
+        "pencil",
+        "cargador",
+        "cable",
+        "adaptador",
+        "carcasa",
+        "protector"
+      ]
     }
   ]
 }
