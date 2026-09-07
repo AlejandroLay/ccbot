@@ -75,6 +75,23 @@ Si algún día quieres inmediatez, el `launchd` del Mac sigue disponible (ver m�
 pero **no ejecutes los dos a la vez**: llevan estados separados y recibirías los avisos
 por duplicado.
 
+## Qué trae cada aviso
+
+Cada producto nuevo llega como una tarjeta de Discord con:
+
+- **Nombre** limpio y enlazado a la ficha. Los títulos de la web vienen en minúsculas y
+  con palabras repetidas (`portatil apple apple macbook air m2`); el bot quita la
+  repetición y capitaliza.
+- **Precio** en formato español. Si está rebajado, muestra además el precio anterior y
+  el porcentaje: `968,95 € / antes 1.008,95 € · -4%`.
+- **Estado** del artículo de segunda mano: "Perfecto", "Usado"...
+- **Detectado**, que Discord pinta como "hace 5 minutos" en tu zona horaria.
+- Miniatura del producto.
+
+> **Sobre "Detectado":** la web **no publica** cuándo subió el artículo. Los únicos
+> `datePublished` de sus páginas son de las reseñas de eKomi. Así que lo que ves es
+> cuándo lo vio el bot, con un margen igual al intervalo de ejecución (30 minutos).
+
 ## Modos de ejecución
 
 | Comando | Qué hace |

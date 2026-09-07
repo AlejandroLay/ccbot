@@ -459,3 +459,86 @@ def test_el_precio_viejo_no_se_cuela_por_ninguna_via():
         TILE_REAL_REBAJADO.replace('class="principal"', 'class="oculto"'),
     ):
         assert cc_bot.extraer_productos(_pagina(variante))[0]["precio"] != 1008.95
+
+
+# ---------------------------------------------------------------------------
+# Datos extra del tile: estado y precio anterior
+# ---------------------------------------------------------------------------
+
+def test_extrae_estado_y_precio_anterior():
+    items = cc_bot.extraer_productos(_pagina(TILE_REAL_REBAJADO))
+    assert items[0]["precio"] == 968.95
+    assert items[0]["precio_antes"] == 1008.95
+
+
+def test_estado_sale_del_datalayer_si_no_hay_clase_status():
+    items = cc_bot.extraer_productos(_pagina(TILE_REAL_SIN_REBAJA))
+    assert items[0]["estado"] is None  # ese tile de ejemplo no trae variant
+
+    tile = TILE_REAL_SIN_REBAJA.replace('"price":104.95', '"price":104.95,"variant":"Perfecto"')
+    assert cc_bot.extraer_productos(_pagina(tile))[0]["estado"] == "Perfecto"
+
+
+def test_estado_prefiere_la_clase_status():
+    tile = TILE_REAL_SIN_REBAJA.replace(
+        '<div class="price">', '<div class="status">Usado</div><div class="price">')
+    assert cc_bot.extraer_productos(_pagina(tile))[0]["estado"] == "Usado"
+
+
+def test_sin_rebaja_no_hay_precio_anterior():
+    assert cc_bot.extraer_productos(_pagina(TILE_REAL_SIN_REBAJA))[0]["precio_antes"] is None
+
+
+# ---------------------------------------------------------------------------
+# Formato del mensaje de Discord
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("valor,esperado", [
+    (1470.95, "1.470,95 €"),
+    (649.94, "649,94 €"),
+    (26.9, "26,90 €"),
+    (None, "sin precio"),
+])
+def test_precios_en_formato_espanol(valor, esperado):
+    assert cc_bot._euros(valor) == esperado
+
+
+def test_titulo_quita_palabras_repetidas_y_capitaliza():
+    crudo = "portatil apple apple macbook air m2 8-core 3.4 13 (8gpu) (2022) (a2681)"
+    assert cc_bot._titulo_legible(crudo) == "Portatil apple macbook air m2 8-core 3.4 13 (8gpu) (2022) (a2681)"
+
+
+def _embed(item):
+    from datetime import datetime, timezone
+    return cc_bot._embed_de(item, "macbook-air-m2", datetime(2026, 9, 8, 10, 0, tzinfo=timezone.utc))
+
+
+def test_el_embed_lleva_nombre_precio_estado_y_momento():
+    item = {"id": "1", "titulo": "macbook air m2", "precio": 649.94, "precio_antes": None,
+            "estado": "Usado", "url": "https://ejemplo/p", "imagen": None}
+    e = _embed(item)
+    campos = {c["name"]: c["value"] for c in e["fields"]}
+
+    assert e["title"] == "Macbook air m2"
+    assert e["url"] == "https://ejemplo/p"
+    assert campos["Precio"] == "**649,94 €**"
+    assert campos["Estado"] == "Usado"
+    assert campos["Detectado"].startswith("<t:")     # Discord lo pinta como "hace X"
+    assert e["timestamp"] == "2026-09-08T10:00:00+00:00"
+    assert "macbook-air-m2" in e["footer"]["text"]
+
+
+def test_el_embed_muestra_la_rebaja_y_el_porcentaje():
+    item = {"id": "1", "titulo": "volante", "precio": 968.95, "precio_antes": 1008.95,
+            "estado": None, "url": "u", "imagen": None}
+    precio = {c["name"]: c["value"] for c in _embed(item)["fields"]}["Precio"]
+
+    assert "968,95 €" in precio
+    assert "antes 1.008,95 €" in precio
+    assert "-4%" in precio
+
+
+def test_sin_estado_no_se_pinta_ese_campo():
+    item = {"id": "1", "titulo": "x", "precio": 10.0, "precio_antes": None,
+            "estado": None, "url": "u", "imagen": None}
+    assert "Estado" not in {c["name"] for c in _embed(item)["fields"]}

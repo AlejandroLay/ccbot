@@ -177,6 +177,8 @@ def _desde_tiles(html: str) -> list[dict]:
             "id": pid,
             "titulo": " ".join(titulo.split()),
             "precio": _precio_de_tile(tile),
+            "precio_antes": _precio_antes_de_tile(tile),
+            "estado": _estado_de_tile(tile),
             "url": _absoluta(href),
             "imagen": _imagen_de_tile(tile),
         })
@@ -236,15 +238,20 @@ def _precio_de_tile(tile):
 
 
 def _precio_de_datalayer(tile):
-    """La web incrusta en cada tile un JSON de analitica con el precio bueno:
-    data-product-datalayer='{"id":"...","price":968.95,...}'."""
+    return _a_float((_datalayer(tile) or {}).get("price"))
+
+
+def _datalayer(tile):
+    """La web incrusta en cada tile un JSON de analitica con datos utiles:
+    data-product-datalayer='{"id":"...","price":968.95,"variant":"Usado",...}'."""
     crudo = tile.get("data-product-datalayer")
     if not crudo:
         return None
     try:
-        return _a_float(json.loads(crudo).get("price"))
-    except (json.JSONDecodeError, AttributeError):
+        datos = json.loads(crudo)
+    except json.JSONDecodeError:
         return None
+    return datos if isinstance(datos, dict) else None
 
 
 def _es_precio_viejo(nodo) -> bool:
@@ -258,6 +265,24 @@ def _es_precio_viejo(nodo) -> bool:
             return True
         nodo = nodo.parent
     return False
+
+
+def _precio_antes_de_tile(tile):
+    """El precio tachado de antes de la rebaja, si el producto esta rebajado."""
+    nodo = tile.select_one(".old-price")
+    if nodo is None:
+        return None
+    return _a_float(nodo.get_text(" ", strip=True))
+
+
+def _estado_de_tile(tile):
+    """Estado del articulo de segunda mano: "Perfecto", "Usado"..."""
+    nodo = tile.select_one(".status")
+    if nodo is not None:
+        texto = nodo.get_text(" ", strip=True)
+        if texto:
+            return texto
+    return (_datalayer(tile) or {}).get("variant") or None
 
 
 def _imagen_de_tile(tile):
@@ -429,24 +454,69 @@ def guardar_vistos(nombre: str, vistos: dict) -> None:
 # 5. DISCORD
 # ---------------------------------------------------------------------------
 
+def _euros(valor) -> str:
+    """1470.95 -> '1.470,95 €' (formato espanol)."""
+    if valor is None:
+        return "sin precio"
+    entero, _, decimales = f"{valor:,.2f}".partition(".")
+    return f"{entero.replace(',', '.')},{decimales} €"
+
+
+def _titulo_legible(titulo: str) -> str:
+    """Los titulos vienen en minusculas y con palabras repetidas
+    ("portatil apple apple macbook air m2"). Se limpia para el aviso."""
+    palabras, limpio = titulo.split(), []
+    for palabra in palabras:
+        if not limpio or palabra.lower() != limpio[-1].lower():
+            limpio.append(palabra)
+    texto = " ".join(limpio)
+    return texto[:1].upper() + texto[1:]
+
+
+def _embed_de(item: dict, nombre_busqueda: str, detectado: datetime) -> dict:
+    """Un producto -> una tarjeta de Discord con los datos separados en campos."""
+    precio = _euros(item.get("precio"))
+    antes = item.get("precio_antes")
+    if antes and item.get("precio") and antes > item["precio"]:
+        descuento = round((1 - item["precio"] / antes) * 100)
+        precio = f"**{precio}**\nantes {_euros(antes)} · **-{descuento}%**"
+    else:
+        precio = f"**{precio}**"
+
+    campos = [{"name": "Precio", "value": precio, "inline": True}]
+    if item.get("estado"):
+        campos.append({"name": "Estado", "value": item["estado"], "inline": True})
+    # <t:...:R> lo pinta Discord como "hace 3 minutos", en la zona horaria de
+    # quien lo lee. La web no publica cuando subieron el articulo, asi que lo
+    # honesto es decir cuando lo vio el bot.
+    campos.append({
+        "name": "Detectado",
+        "value": f"<t:{int(detectado.timestamp())}:R>",
+        "inline": True,
+    })
+
+    embed = {
+        "title": _titulo_legible(item["titulo"])[:250] or "Producto nuevo",
+        "url": item["url"],
+        "fields": campos,
+        "color": 0x2ECC71,
+        "footer": {"text": f"Cash Converters · {nombre_busqueda}"},
+        "timestamp": detectado.isoformat(),
+    }
+    if item.get("imagen"):
+        embed["thumbnail"] = {"url": item["imagen"]}
+    return embed
+
+
 def avisar(nuevos: list[dict], webhook_url: str, nombre_busqueda: str) -> None:
+    detectado = datetime.now(timezone.utc)
     lotes = [nuevos[i:i + EMBEDS_POR_MENSAJE] for i in range(0, len(nuevos), EMBEDS_POR_MENSAJE)]
     for lote in lotes:
-        embeds = []
-        for it in lote:
-            precio = f"{it['precio']:.2f} EUR" if it["precio"] is not None else "s/p"
-            embed = {
-                "title": it["titulo"][:250] or "Producto nuevo",
-                "url": it["url"],
-                "description": f"**{precio}**",
-                "footer": {"text": nombre_busqueda},
-                "color": 0x2ECC71,
-            }
-            if it.get("imagen"):
-                embed["thumbnail"] = {"url": it["imagen"]}
-            embeds.append(embed)
-
-        payload = {"content": f"[{nombre_busqueda}] {len(lote)} producto(s) nuevo(s)", "embeds": embeds}
+        cuantos = f"**{len(lote)} producto{'s' if len(lote) > 1 else ''} nuevo{'s' if len(lote) > 1 else ''}**"
+        payload = {
+            "content": f"🆕 {cuantos} en `{nombre_busqueda}`",
+            "embeds": [_embed_de(i, nombre_busqueda, detectado) for i in lote],
+        }
         r = creq.post(webhook_url, json=payload, timeout=20)
         if r.status_code == 429:  # rate limit de Discord
             espera = r.json().get("retry_after", 2)

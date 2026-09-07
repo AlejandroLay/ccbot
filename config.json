@@ -40,6 +40,25 @@
         "magic",
         "raton"
       ]
+    },
+    {
+      "nombre": "macbook-air-m2",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m2&lang=es&sz=48",
+      "activa": true,
+      "_nota": "Exigir 'macbook air' descarta los mac mini ('ordenador apple mac mini m2') y los MacBook Pro, que es todo el ruido que devuelve esta busqueda.",
+      "keywords_todas": [
+        "macbook air",
+        "m2"
+      ],
+      "keywords_ninguna": [
+        "funda",
+        "cargador",
+        "cable",
+        "adaptador",
+        "teclado",
+        "carcasa",
+        "bateria"
+      ]
     }
   ]
 }
