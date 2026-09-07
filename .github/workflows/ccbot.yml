@@ -32,7 +32,7 @@ jobs:
           cache: pip
 
       - name: Instalar dependencias
-        run: pip install --quiet curl_cffi beautifulsoup4
+        run: pip install --quiet -r requirements.txt
 
       - name: Ejecutar el bot
         env:

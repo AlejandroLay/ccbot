@@ -1,0 +1,6 @@
+# curl_cffi imita el fingerprint TLS de Chrome: sin esto, la web bloquea.
+curl_cffi>=0.13,<1.0
+beautifulsoup4>=4.13,<5.0
+
+# Solo para los tests
+pytest>=8.0
