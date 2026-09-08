@@ -20,7 +20,7 @@
       "nombre": "macbook-air-m4",
       "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m4&lang=es&sz=500",
       "activa": true,
-      "_nota": "El buscador ignora el token 'm4' y devuelve 300 MacBook antiguos. En vez de exigir 'm4' en el titulo (fallaria en silencio si lo titulan sin el chip), se descartan los chips viejos conocidos: pasa cualquier MacBook Air que NO sea Intel, M1, M2 ni M3.",
+      "_nota": "El buscador ignora el token 'm4' y devuelve 300 MacBook antiguos. En vez de exigir 'm4' en el titulo (fallaria en silencio si lo titulan sin el chip), se descartan los chips que tienen aviso propio: pasa cualquier MacBook Air que no sea Intel, M1, M2, M3 ni M5. Asi sigue cazando un M4 aunque no pongan el chip, y de paso un futuro M6.",
       "keywords_todas": [
         "macbook air"
       ],
@@ -28,6 +28,7 @@
         "core i",
         "core 2",
         "m1",
+        "m5",
         "m2",
         "m3",
         "funda",
@@ -97,6 +98,25 @@
         "adaptador",
         "carcasa",
         "protector"
+      ]
+    },
+    {
+      "nombre": "macbook-air-m5",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m5&lang=es&sz=48",
+      "activa": true,
+      "_nota": "Busqueda precisa: hoy devuelve 1 resultado y es un Air M5 real.",
+      "keywords_todas": [
+        "macbook air",
+        "m5"
+      ],
+      "keywords_ninguna": [
+        "funda",
+        "cargador",
+        "cable",
+        "adaptador",
+        "teclado",
+        "carcasa",
+        "bateria"
       ]
     }
   ]

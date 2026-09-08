@@ -174,7 +174,7 @@ def test_busqueda_sin_filtros_lo_acepta_todo():
 # el chip, el aviso llega igual (mejor un falso positivo que un fallo mudo).
 BUSQUEDA_M4 = {
     "keywords_todas": ["macbook air"],
-    "keywords_ninguna": ["core i", "core 2", "m1", "m2", "m3",
+    "keywords_ninguna": ["core i", "core 2", "m1", "m2", "m3", "m5",
                          "funda", "cargador", "cable", "adaptador",
                          "teclado", "carcasa", "bateria", "magic", "raton"],
 }
@@ -182,8 +182,8 @@ BUSQUEDA_M4 = {
 
 @pytest.mark.parametrize("titulo", [
     "portatil apple apple macbook air m4 10-core 4.0 13 (2025) (a3240)",
-    "portatil apple apple macbook air m5 15 (10gpu) 16gb 512gb (a3448)",
     "portatil apple apple macbook air 13 (2025) (a3240) 16gb 256gb",  # sin chip en el titulo
+    "portatil apple apple macbook air m6 10-core 13 (2026)",          # un futuro M6 tambien
 ])
 def test_avisa_de_los_macbook_air_modernos(titulo):
     assert cc_bot.pasa_filtros(_item(titulo, 1100.0), BUSQUEDA_M4)
@@ -195,6 +195,7 @@ def test_avisa_de_los_macbook_air_modernos(titulo):
     "portatil apple apple macbook air m2 8-core 3.4 13 (8gpu) (2022) (a2681)",
     "portatil apple apple macbook pro m3 8-core 4.0 14 (10gpu) (2023)",
     "portatil apple apple macbook pro core i7 2.6 15 touchbar (2019) (a1990)",
+    "portatil apple apple macbook air m5 15 (10gpu) 16gb 512gb (a3448)",  # tiene aviso propio
     "funda macbook air 13",
     "cargador apple macbook air usb-c 30w",
 ])
@@ -619,3 +620,44 @@ def test_avisa_de_los_ipad_pro_m5(titulo):
 ])
 def test_descarta_el_ruido_de_la_busqueda_de_ipad(titulo):
     assert not cc_bot.pasa_filtros(_item(titulo, 200.0), BUSQUEDA_IPAD)
+
+
+# ---------------------------------------------------------------------------
+# Un aviso por producto: dos busquedas que se solapen mandarian dos mensajes
+# de Discord por el mismo portatil.
+# ---------------------------------------------------------------------------
+
+def _config_real():
+    import json, pathlib
+    ruta = pathlib.Path(__file__).parent / "config.json"
+    return json.loads(ruta.read_text(encoding="utf-8"))["busquedas"]
+
+
+@pytest.mark.parametrize("titulo,precio", [
+    ("portatil apple apple macbook air m2 8-core 3.4 13 (8gpu) (2022) (a2681)", 649.94),
+    ("portatil apple apple macbook air m3 8-core 4.0 13 (10gpu) (2024) (a3113)", 999.0),
+    ("portatil apple apple macbook air m4 10-core 4.0 13 (2025) (a3240)", 1100.0),
+    ("portatil apple apple macbook air m5 15 (10gpu) 16gb 512gb (a3448)", 1470.95),
+    ("ipad apple ipad pro m5 (wi-fi) (a3357) (11,0) 256gb", 918.95),
+    ("consola ps5 sony playstation 5 pro 2tb", 849.0),
+])
+def test_ningun_producto_dispara_dos_avisos(titulo, precio):
+    item = {"id": "1", "titulo": titulo, "precio": precio, "url": "u", "imagen": None}
+    coinciden = [b["nombre"] for b in _config_real() if cc_bot.pasa_filtros(item, b)]
+    assert len(coinciden) <= 1, f"{titulo!r} dispara {coinciden}"
+
+
+def test_cada_producto_buscado_lo_recoge_su_aviso():
+    """Lo contrario: que nada de lo que persigue el usuario se quede sin aviso."""
+    esperado = {
+        "portatil apple apple macbook air m2 8-core 3.4 13 (8gpu) (2022) (a2681)": "macbook-air-m2",
+        "portatil apple apple macbook air m3 8-core 4.0 13 (10gpu) (2024) (a3113)": "macbook-air-m3",
+        "portatil apple apple macbook air m4 10-core 4.0 13 (2025) (a3240)": "macbook-air-m4",
+        "portatil apple apple macbook air m5 15 (10gpu) 16gb 512gb (a3448)": "macbook-air-m5",
+        "ipad apple ipad pro m5 (wi-fi) (a3357) (11,0) 256gb": "ipad-pro-m5",
+        "consola ps5 sony playstation 5 pro 2tb": "ps5-pro",
+    }
+    for titulo, aviso in esperado.items():
+        item = {"id": "1", "titulo": titulo, "precio": 900.0, "url": "u", "imagen": None}
+        coinciden = [b["nombre"] for b in _config_real() if cc_bot.pasa_filtros(item, b)]
+        assert coinciden == [aviso], f"{titulo!r} -> {coinciden}, se esperaba {aviso}"
