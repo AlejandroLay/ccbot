@@ -639,6 +639,8 @@ def _config_real():
     ("portatil apple apple macbook air m4 10-core 4.0 13 (2025) (a3240)", 1100.0),
     ("portatil apple apple macbook air m5 15 (10gpu) 16gb 512gb (a3448)", 1470.95),
     ("ipad apple ipad pro m5 (wi-fi) (a3357) (11,0) 256gb", 918.95),
+    ("portatil apple apple macbook pro m4 pro 12-core 14 (16gpu)(2024)(a3401)", 1404.95),
+    ("portatil apple apple macbook pro m5 10-core 16gb 14", 1424.95),
     ("consola ps5 sony playstation 5 pro 2tb", 849.0),
 ])
 def test_ningun_producto_dispara_dos_avisos(titulo, precio):
@@ -655,6 +657,9 @@ def test_cada_producto_buscado_lo_recoge_su_aviso():
         "portatil apple apple macbook air m4 10-core 4.0 13 (2025) (a3240)": "macbook-air-m4",
         "portatil apple apple macbook air m5 15 (10gpu) 16gb 512gb (a3448)": "macbook-air-m5",
         "ipad apple ipad pro m5 (wi-fi) (a3357) (11,0) 256gb": "ipad-pro-m5",
+        "portatil apple apple macbook pro m4 pro 12-core 14 (16gpu)(2024)(a3401)": "macbook-pro-m4",
+        "portatil apple apple macbook pro m4 max 16-core 16 (2024)": "macbook-pro-m4",
+        "portatil apple apple macbook pro m5 10-core 16gb 14": "macbook-pro-m5",
         "consola ps5 sony playstation 5 pro 2tb": "ps5-pro",
     }
     for titulo, aviso in esperado.items():

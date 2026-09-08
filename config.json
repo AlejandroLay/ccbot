@@ -118,6 +118,44 @@
         "carcasa",
         "bateria"
       ]
+    },
+    {
+      "nombre": "macbook-pro-m4",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro+m4&lang=es&sz=48",
+      "activa": true,
+      "_nota": "Busqueda precisa: hoy devuelve 1 resultado y es un MacBook Pro M4 Pro real. Filtrar por 'm4' a secas cubre las tres variantes del chip: M4, M4 Pro y M4 Max.",
+      "keywords_todas": [
+        "macbook pro",
+        "m4"
+      ],
+      "keywords_ninguna": [
+        "funda",
+        "cargador",
+        "cable",
+        "adaptador",
+        "teclado",
+        "carcasa",
+        "bateria"
+      ]
+    },
+    {
+      "nombre": "macbook-pro-m5",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro+m5&lang=es&sz=48",
+      "activa": true,
+      "_nota": "Busqueda precisa: hoy devuelve 1 resultado y es un MacBook Pro M5 real. Igual que el M4, cubre tambien un futuro M5 Pro o M5 Max.",
+      "keywords_todas": [
+        "macbook pro",
+        "m5"
+      ],
+      "keywords_ninguna": [
+        "funda",
+        "cargador",
+        "cable",
+        "adaptador",
+        "teclado",
+        "carcasa",
+        "bateria"
+      ]
     }
   ]
 }
