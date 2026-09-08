@@ -386,6 +386,46 @@ def _absoluta(url: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# 2b. FICHA TECNICA DEL PRODUCTO
+#
+# El listado no trae las especificaciones: hay que abrir la ficha, que las
+# publica como pares etiqueta/valor. Solo se consulta para los productos que
+# ya sabemos que vamos a avisar, que son pocos, no para todo el listado.
+# ---------------------------------------------------------------------------
+
+MAX_FICHAS = 10   # tope de fichas por busqueda y ejecucion, por cortesia
+
+
+def ficha_tecnica(url: str) -> dict:
+    """Especificaciones de UNA unidad concreta (no del modelo): pulgadas, RAM,
+    capacidad, procesador, idioma del teclado..."""
+    try:
+        return _parsear_ficha(descargar(url, intentos=2))
+    except Exception as e:
+        # Que no llegue la ficha nunca debe impedir el aviso.
+        log(f"No se pudo leer la ficha ({type(e).__name__}): {url[:80]}", "WARN")
+        return {}
+
+
+def _parsear_ficha(html: str) -> dict:
+    """<li class="attribute-values"><span class="label">pulgadas:</span>
+        <span class="value">13.0</span></li>  ->  {"pulgadas": "13.0"}"""
+    from bs4 import BeautifulSoup
+
+    datos = {}
+    for li in BeautifulSoup(html, "html.parser").select(".attribute-values"):
+        etiqueta = li.select_one(".label")
+        valor = li.select_one(".value")
+        if etiqueta is None or valor is None:
+            continue
+        clave = etiqueta.get_text(" ", strip=True).rstrip(":").strip().lower()
+        texto = valor.get_text(" ", strip=True)
+        if clave and texto:
+            datos[clave] = texto
+    return datos
+
+
+# ---------------------------------------------------------------------------
 # 3. FILTROS
 # ---------------------------------------------------------------------------
 
@@ -473,6 +513,49 @@ def _titulo_legible(titulo: str) -> str:
     return texto[:1].upper() + texto[1:]
 
 
+# Que campos de la ficha se enseñan y en que orden. Se pintan solo los que
+# el producto tenga: un iPad no trae teclado y una consola no trae RAM.
+CAMPOS_FICHA = [
+    ("Chip", ("procesador",)),
+    ("Pantalla", ("pulgadas",)),
+    ("RAM", ("memoria ram",)),
+    ("Almacenamiento", ("capacidad ssd", "capacidad", "capacidad hdd")),
+    ("Teclado", ("idioma teclado",)),
+    ("Año", ("año de lanzamiento",)),
+]
+
+
+def _formatear_spec(nombre: str, valor: str) -> str:
+    """La web da los numeros en crudo: '13.0', '16.0', '1000.0'."""
+    numero = _a_float(valor)
+    if nombre == "Pantalla" and numero:
+        return f'{numero:g}"'
+    if nombre in ("RAM", "Almacenamiento") and numero:
+        if numero >= 1000:
+            return f"{numero / 1000:g} TB"
+        return f"{numero:g} GB"
+    if nombre == "Año" and numero:
+        return f"{numero:.0f}"
+    if nombre == "Chip":
+        return valor.upper() if len(valor) <= 6 else valor.capitalize()
+    return valor.capitalize()
+
+
+def _campos_de_ficha(ficha: dict) -> list[dict]:
+    campos = []
+    for nombre, claves in CAMPOS_FICHA:
+        for clave in claves:
+            valor = (ficha or {}).get(clave)
+            if not valor:
+                continue
+            numero = _a_float(valor)
+            if numero == 0:          # "capacidad hdd: 0.0" = no tiene
+                continue
+            campos.append({"name": nombre, "value": _formatear_spec(nombre, valor), "inline": True})
+            break
+    return campos
+
+
 def _embed_de(item: dict, nombre_busqueda: str, detectado: datetime) -> dict:
     """Un producto -> una tarjeta de Discord con los datos separados en campos."""
     precio = _euros(item.get("precio"))
@@ -494,6 +577,7 @@ def _embed_de(item: dict, nombre_busqueda: str, detectado: datetime) -> dict:
         "value": f"<t:{int(detectado.timestamp())}:R>",
         "inline": True,
     })
+    campos += _campos_de_ficha(item.get("ficha"))
 
     embed = {
         "title": _titulo_legible(item["titulo"])[:250] or "Producto nuevo",
@@ -598,6 +682,10 @@ def procesar_busqueda(busqueda: dict, webhook_url: str, modo_dump: bool, modo_se
         if not webhook_url:
             log(f"[{nombre}] DISCORD_WEBHOOK_URL sin configurar, no se puede avisar", "ERROR")
             return False
+        for n, i in enumerate(nuevos[:MAX_FICHAS]):
+            if n:
+                time.sleep(1)   # cortesia entre fichas, no tras la ultima
+            i["ficha"] = ficha_tecnica(i["url"])
         avisar(nuevos, webhook_url, nombre)
     return True
 

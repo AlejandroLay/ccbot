@@ -86,7 +86,15 @@ Cada producto nuevo llega como una tarjeta de Discord con:
   el porcentaje: `968,95 € / antes 1.008,95 € · -4%`.
 - **Estado** del artículo de segunda mano: "Perfecto", "Usado"...
 - **Detectado**, que Discord pinta como "hace 5 minutos" en tu zona horaria.
+- **Ficha técnica** de esa unidad concreta: chip, pulgadas, RAM, almacenamiento,
+  idioma del teclado y año. Se pintan solo los campos que el producto tenga, así que un
+  iPad sale sin teclado y una consola sin RAM.
 - Miniatura del producto.
+
+El listado no trae las especificaciones: hay que abrir la ficha de cada producto. El bot
+solo lo hace para lo que va a avisar (`MAX_FICHAS = 10` por búsqueda y ejecución, con un
+segundo de pausa entre ellas), nunca para el listado entero. Si la ficha falla, **el
+aviso sale igual** con el precio y el estado: enriquecer nunca puede costarte una alerta.
 
 > **Sobre "Detectado":** la web **no publica** cuándo subió el artículo. Los únicos
 > `datePublished` de sus páginas son de las reseñas de eKomi. Así que lo que ves es

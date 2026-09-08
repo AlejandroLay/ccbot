@@ -217,6 +217,7 @@ def entorno(tmp_path, monkeypatch):
 
     avisos = []
     monkeypatch.setattr(cc_bot, "avisar", lambda nuevos, url, nombre: avisos.append((nombre, list(nuevos))))
+    monkeypatch.setattr(cc_bot, "ficha_tecnica", lambda url: {})
     return tmp_path, avisos
 
 
@@ -666,3 +667,89 @@ def test_cada_producto_buscado_lo_recoge_su_aviso():
         item = {"id": "1", "titulo": titulo, "precio": 900.0, "url": "u", "imagen": None}
         coinciden = [b["nombre"] for b in _config_real() if cc_bot.pasa_filtros(item, b)]
         assert coinciden == [aviso], f"{titulo!r} -> {coinciden}, se esperaba {aviso}"
+
+
+# ---------------------------------------------------------------------------
+# Ficha tecnica: pulgadas, RAM, capacidad, chip, teclado
+#
+# El listado no trae nada de esto; hay que abrir la ficha del producto, que lo
+# publica como pares etiqueta/valor. Copiado del HTML real.
+# ---------------------------------------------------------------------------
+
+FICHA_HTML = """
+<div class="accordion-detail product-atributes"><ul>
+  <li class="attribute-values"><span class="label">marca:</span><a class="value link">apple</a></li>
+  <li class="attribute-values"><span class="label">pulgadas:</span><span class="value">13.0</span></li>
+  <li class="attribute-values"><span class="label">año de lanzamiento:</span><span class="value">2025</span></li>
+  <li class="attribute-values"><span class="label">idioma teclado:</span><span class="value">español</span></li>
+  <li class="attribute-values"><span class="label">memoria ram:</span><span class="value">16.0</span></li>
+  <li class="attribute-values"><span class="label">procesador:</span><span class="value">m4</span></li>
+  <li class="attribute-values"><span class="label">capacidad ssd:</span><span class="value">256.0</span></li>
+  <li class="attribute-values"><span class="label">capacidad hdd:</span><span class="value">0.0</span></li>
+</ul></div>
+"""
+
+
+def test_lee_la_ficha_tecnica():
+    ficha = cc_bot._parsear_ficha(FICHA_HTML)
+    assert ficha["pulgadas"] == "13.0"
+    assert ficha["memoria ram"] == "16.0"
+    assert ficha["idioma teclado"] == "español"
+    assert ficha["procesador"] == "m4"
+    assert ficha["marca"] == "apple"
+
+
+def test_ficha_de_una_pagina_sin_especificaciones():
+    assert cc_bot._parsear_ficha("<html><body>nada</body></html>") == {}
+
+
+@pytest.mark.parametrize("nombre,valor,esperado", [
+    ("Pantalla", "13.0", '13"'),
+    ("Pantalla", "11.0", '11"'),
+    ("RAM", "16.0", "16 GB"),
+    ("Almacenamiento", "256.0", "256 GB"),
+    ("Almacenamiento", "1000.0", "1 TB"),
+    ("Año", "2025", "2025"),
+    ("Chip", "m4", "M4"),
+    ("Teclado", "español", "Español"),
+])
+def test_formato_de_las_especificaciones(nombre, valor, esperado):
+    assert cc_bot._formatear_spec(nombre, valor) == esperado
+
+
+def test_los_campos_salen_en_orden_y_sin_los_que_faltan():
+    campos = cc_bot._campos_de_ficha(cc_bot._parsear_ficha(FICHA_HTML))
+    assert [c["name"] for c in campos] == ["Chip", "Pantalla", "RAM", "Almacenamiento", "Teclado", "Año"]
+    valores = {c["name"]: c["value"] for c in campos}
+    assert valores["Almacenamiento"] == "256 GB"   # el ssd, no el hdd de 0.0
+    assert valores["Teclado"] == "Español"
+
+
+def test_un_ipad_no_enseña_campos_que_no_tiene():
+    """Los iPad traen 'capacidad' en vez de 'capacidad ssd', y no traen teclado."""
+    ficha = {"pulgadas": "11.0", "capacidad": "1000.0", "procesador": "m5"}
+    valores = {c["name"]: c["value"] for c in cc_bot._campos_de_ficha(ficha)}
+    assert valores == {"Chip": "M5", "Pantalla": '11"', "Almacenamiento": "1 TB"}
+
+
+def test_sin_ficha_el_aviso_sale_igual():
+    """Si la ficha falla, el aviso debe llegar igualmente con lo basico."""
+    item = {"id": "1", "titulo": "macbook air m4", "precio": 868.95, "precio_antes": None,
+            "estado": "Perfecto", "url": "u", "imagen": None, "ficha": {}}
+    nombres = [c["name"] for c in _embed(item)["fields"]]
+    assert nombres == ["Precio", "Estado", "Detectado"]
+
+
+def test_el_aviso_completo_lleva_las_especificaciones():
+    item = {"id": "1", "titulo": "macbook air m4", "precio": 868.95, "precio_antes": None,
+            "estado": "Perfecto", "url": "u", "imagen": None,
+            "ficha": cc_bot._parsear_ficha(FICHA_HTML)}
+    valores = {c["name"]: c["value"] for c in _embed(item)["fields"]}
+    assert valores["Precio"] == "**868,95 €**"
+    assert valores["Estado"] == "Perfecto"
+    assert valores["Chip"] == "M4"
+    assert valores["Pantalla"] == '13"'
+    assert valores["RAM"] == "16 GB"
+    assert valores["Almacenamiento"] == "256 GB"
+    assert valores["Teclado"] == "Español"
+    assert valores["Año"] == "2025"
