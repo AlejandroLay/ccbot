@@ -2,19 +2,22 @@
   "busquedas": [
     {
       "nombre": "ps5-pro",
-      "url": "https://www.cashconverters.es/es/es/search/?q=ps5+pro&lang=es&sz=48",
+      "url": "https://www.cashconverters.es/es/es/search/?q=consola+ps5&lang=es&sz=500",
       "activa": true,
       "keywords_todas": [
-        "ps5"
+        "consola",
+        "ps5",
+        "pro"
       ],
       "keywords_ninguna": [
-        "volante",
-        "monitor",
-        "televisor",
-        "portatil"
+        "funda",
+        "soporte",
+        "stand",
+        "vertical",
+        "skin",
+        "adhesivo"
       ],
-      "_nota": "Una PS5 Pro cuesta 800+, asi que el filtro de verdad es el precio minimo: todo lo barato (mandos, juegos, fundas) cae solo. La lista de exclusiones se queda corta a proposito para no descartar packs del tipo 'consola + mando'.",
-      "precio_min": 700
+      "_nota": "Titulo real de una PS5 Pro segun el usuario: 'consola ps5 sony playstation 5 pro 2tb'. Exigir consola+ps5+pro da 0 falsos positivos sobre las 322 consolas del catalogo y deja fuera Slim, Digital Edition, Portal y estandar. Sin filtro de precio A PROPOSITO: con un filtro de titulo tan exacto, un minimo solo podria silenciar la ganga. Se busca sobre el listado completo de consolas (322) en vez de sobre 'ps5 pro' (16 resultados y ninguna consola), para que el orden del buscador no pueda esconder una unidad."
     },
     {
       "nombre": "macbook-air-m4",

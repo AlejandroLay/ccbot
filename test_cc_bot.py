@@ -753,3 +753,47 @@ def test_el_aviso_completo_lleva_las_especificaciones():
     assert valores["Almacenamiento"] == "256 GB"
     assert valores["Teclado"] == "Español"
     assert valores["Año"] == "2025"
+
+
+# ---------------------------------------------------------------------------
+# PS5 Pro. El titulo real con el que Cash Converters las publica, dato dado
+# por el usuario:  "Consola ps5 sony playstation 5 pro 2tb"
+# ---------------------------------------------------------------------------
+
+BUSQUEDA_PS5_PRO = {
+    "keywords_todas": ["consola", "ps5", "pro"],
+    "keywords_ninguna": ["funda", "soporte", "stand", "vertical", "skin", "adhesivo"],
+}
+
+
+@pytest.mark.parametrize("precio", [1099.0, 849.0, 650.0, 450.0, None])
+def test_avisa_de_la_ps5_pro_a_cualquier_precio(precio):
+    """Sin suelo de precio a proposito: una Pro tirada de precio es justo la
+    que no te quieres perder."""
+    item = {"id": "1", "titulo": "consola ps5 sony playstation 5 pro 2tb",
+            "precio": precio, "url": "u", "imagen": None}
+    assert cc_bot.pasa_filtros(item, BUSQUEDA_PS5_PRO)
+
+
+@pytest.mark.parametrize("titulo", [
+    "consola ps5 sony playstation 5 slim standard 1tb",
+    "consola ps5 sony playstation 5 digital edition",
+    "consola ps5 sony playstation 5 portal",
+    "consola ps5 sony playstation 5",
+    "mando ps5 nacon revolution 5 pro",
+    "volante ps5 fanatec gran turismo dd pro",
+    "otros accesorios ps5 sony vertical stand ps5/ps5 pro",
+    "tony hawk's pro skater 1+2",
+])
+def test_solo_la_pro_dispara_el_aviso(titulo):
+    item = {"id": "1", "titulo": titulo, "precio": 799.99, "url": "u", "imagen": None}
+    assert not cc_bot.pasa_filtros(item, BUSQUEDA_PS5_PRO)
+
+
+def test_el_aviso_de_ps5_del_config_real_usa_el_titulo_del_usuario():
+    """Guardian: si alguien vuelve a meter un suelo de precio o cambia las
+    palabras clave, este test canta."""
+    ps5 = [b for b in _config_real() if b["nombre"] == "ps5-pro"][0]
+    item = {"id": "1", "titulo": "consola ps5 sony playstation 5 pro 2tb",
+            "precio": 649.0, "url": "u", "imagen": None}
+    assert cc_bot.pasa_filtros(item, ps5), "una PS5 Pro barata tiene que avisar"
