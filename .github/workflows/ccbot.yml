@@ -7,19 +7,29 @@ on:
     # minutos al mes contra 2.000 gratuitos, y el bot se pararia a mitad de mes.
     #
     # Historia: pedimos cada 30 minutos del 7 al 16 de septiembre de 2026 y
-    # GitHub solo ejecutaba 6-8 veces al dia. Las ejecuciones programadas son
-    # lo primero que recorta el plan gratuito. Los minutos sueltos (no 0 ni 30)
-    # evitan la franja donde programa todo el mundo.
+    # GitHub solo ejecutaba 6-8 veces al dia, con huecos de cinco horas. Las
+    # ejecuciones programadas son lo primero que recorta el plan gratuito, y
+    # por eso existe el modo vigilancia de abajo.
     - cron: "3,13,23,33,43,53 * * * *"
-  workflow_dispatch:      # permite lanzarlo a mano desde la web
+
+  workflow_dispatch:
     inputs:
       seed:
         description: "Marcar todo como visto SIN avisar"
         type: boolean
         default: false
+      vigilancia_minutos:
+        description: "Vigilancia continua: minutos que se queda dando pasadas (0 = una sola pasada)"
+        type: string
+        default: "0"
+      intervalo_segundos:
+        description: "Segundos entre pasadas cuando hay vigilancia continua"
+        type: string
+        default: "300"
 
-# Si una ejecucion se solapa con la anterior, se descarta la nueva: dos
-# procesos escribiendo el mismo estado se pisarian.
+# Una sola ejecucion a la vez: dos procesos escribiendo el mismo estado se
+# pisarian. Las que lleguen mientras hay una en marcha esperan su turno y
+# arrancan en cuanto la anterior termina.
 concurrency:
   group: ccbot
   cancel-in-progress: false
@@ -27,8 +37,10 @@ concurrency:
 jobs:
   vigilar:
     runs-on: ubuntu-latest
+    # El maximo que permite GitHub son 360 minutos; dejamos margen.
+    timeout-minutes: 350
     permissions:
-      contents: write     # necesario para guardar el estado con un commit
+      contents: write
     steps:
       - uses: actions/checkout@v5
 
@@ -40,22 +52,56 @@ jobs:
       - name: Instalar dependencias
         run: pip install --quiet -r requirements.txt
 
-      - name: Ejecutar el bot
+      - name: Vigilar
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: python cc_bot.py ${{ (github.event_name == 'workflow_dispatch' && inputs.seed) && '--seed' || '' }}
-
-      - name: Guardar el estado
-        # se ejecuta aunque el bot falle: si una busqueda va bien y otra no,
-        # no queremos perder lo que si se ha visto
-        if: always()
+          MINUTOS: ${{ inputs.vigilancia_minutos }}
+          INTERVALO: ${{ inputs.intervalo_segundos }}
+          SEED: ${{ inputs.seed }}
         run: |
-          # Latido: cambia una vez al dia, asi que genera como minimo un commit
-          # diario. Sin el, un repo tranquilo dos meses hace que GitHub
-          # desactive solo los workflows programados.
-          date -u +%Y-%m-%d > state/_latido.txt
+          set -u
+          # En las ejecuciones programadas los inputs llegan vacios: una pasada.
+          MINUTOS="${MINUTOS:-0}"; MINUTOS="${MINUTOS:-0}"
+          INTERVALO="${INTERVALO:-300}"
+          [ -z "$MINUTOS" ] && MINUTOS=0
+          [ -z "$INTERVALO" ] && INTERVALO=300
+          FLAGS=""
+          [ "${SEED:-false}" = "true" ] && FLAGS="--seed"
+
           git config user.name "ccbot"
           git config user.email "ccbot@users.noreply.github.com"
-          git add state/
-          git diff --staged --quiet || git commit -m "Estado: $(date -u +'%Y-%m-%d %H:%M') UTC"
-          git push
+
+          fin=$(( $(date +%s) + MINUTOS * 60 ))
+          pasada=0
+
+          guardar_estado() {
+            # Latido: cambia una vez al dia, asi que garantiza un commit diario.
+            # Sin actividad 60 dias, GitHub desactiva los workflows programados.
+            date -u +%Y-%m-%d > state/_latido.txt
+            git add state/
+            if ! git diff --staged --quiet; then
+              git commit -q -m "Estado: $(date -u +'%Y-%m-%d %H:%M') UTC"
+              # Otra ejecucion puede haber publicado estado mientras tanto.
+              git pull --rebase -q || { git rebase --abort 2>/dev/null || true; git reset --hard -q origin/main; return 0; }
+              git push -q || true
+            fi
+          }
+
+          while :; do
+            pasada=$(( pasada + 1 ))
+            echo "::group::pasada $pasada  $(date -u +'%H:%M:%S') UTC"
+            # Una pasada que falle no debe cortar la vigilancia: el bot ya
+            # registra el ERROR y seguimos con la siguiente.
+            python cc_bot.py $FLAGS || echo "La pasada $pasada ha fallado, continuo"
+            guardar_estado
+            echo "::endgroup::"
+
+            ahora=$(date +%s)
+            [ "$ahora" -ge "$fin" ] && break
+            # No dormir mas alla del final de la vigilancia.
+            restante=$(( fin - ahora ))
+            [ "$restante" -lt "$INTERVALO" ] && INTERVALO="$restante"
+            sleep "$INTERVALO"
+          done
+
+          echo "Vigilancia terminada: $pasada pasada(s)."
