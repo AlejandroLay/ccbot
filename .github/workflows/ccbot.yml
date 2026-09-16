@@ -60,11 +60,15 @@ jobs:
           SEED: ${{ inputs.seed }}
         run: |
           set -u
-          # En las ejecuciones programadas los inputs llegan vacios: una pasada.
-          MINUTOS="${MINUTOS:-0}"; MINUTOS="${MINUTOS:-0}"
-          INTERVALO="${INTERVALO:-300}"
-          [ -z "$MINUTOS" ] && MINUTOS=0
-          [ -z "$INTERVALO" ] && INTERVALO=300
+          # En las ejecuciones programadas los inputs llegan vacios. Por defecto
+          # vigilamos 330 minutos: asi UNA ejecucion cubre cinco horas y media
+          # dando pasadas cada 5 minutos, y la siguiente programada, que espera
+          # en cola por el grupo de concurrencia, arranca en el momento en que
+          # esta termina. Cobertura continua 24/7 sin depender de que el cron
+          # entre puntual, que es lo que no hacia (huecos de cinco horas, justo
+          # de madrugada, que es cuando la tienda sube el genero nuevo).
+          [ -z "${MINUTOS:-}" ] && MINUTOS=330
+          [ -z "${INTERVALO:-}" ] && INTERVALO=300
           FLAGS=""
           [ "${SEED:-false}" = "true" ] && FLAGS="--seed"
 
