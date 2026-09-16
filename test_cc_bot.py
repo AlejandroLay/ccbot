@@ -130,6 +130,46 @@ def test_url_relativa_se_convierte_en_absoluta():
 
 
 # ---------------------------------------------------------------------------
+# Enlace del aviso: tiene que llevar a la ficha de la unidad, no al listado.
+# Muchos tiles enlazan a la categoria con ?firstProduct=<pid>, y un aviso asi
+# te deja buscando a mano entre decenas de consolas iguales.
+# ---------------------------------------------------------------------------
+
+TILE_ENLACE_A_LISTADO = """
+<div class="product-tile" data-pid="CF001_E56200_0">
+  <div class="pdp-link">
+    <a href="/es/es/comprar/videojuegos-y-consolas/ps5/consolas/playstation-5/?firstProduct=CF001_E56200_0">
+      consola ps5 sony playstation 5 pro 2tb
+    </a>
+  </div>
+  <div class="principal" data-price="828.95">828,95 €</div>
+</div>
+"""
+
+
+def test_enlace_a_listado_se_reescribe_a_la_ficha():
+    items = cc_bot.extraer_productos(_pagina(TILE_ENLACE_A_LISTADO))
+    assert items[0]["url"] == (
+        "https://www.cashconverters.es/es/es/segunda-mano/CF001_E56200_0.html"
+    )
+
+
+@pytest.mark.parametrize("href, esperada", [
+    # ya es una ficha: se respeta tal cual
+    ("/es/es/segunda-mano/PT006_E347458_0.html",
+     "https://www.cashconverters.es/es/es/segunda-mano/PT006_E347458_0.html"),
+    # ficha con parametros de seguimiento: sigue siendo ficha
+    ("/es/es/segunda-mano/PT006_E347458_0.html?utm_source=x",
+     "https://www.cashconverters.es/es/es/segunda-mano/PT006_E347458_0.html?utm_source=x"),
+    # enlace a categoria: se reconstruye desde el pid
+    ("/es/es/comprar/informatica/portatiles/apple/macbook-air-m2/?firstProduct=PID1",
+     "https://www.cashconverters.es/es/es/segunda-mano/PID1.html"),
+])
+def test_url_de_producto(href, esperada):
+    assert cc_bot._url_de_producto("PID1", href) == esperada
+
+
+# ---------------------------------------------------------------------------
 # Filtros
 # ---------------------------------------------------------------------------
 

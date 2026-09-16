@@ -2,9 +2,13 @@ name: ccbot
 
 on:
   schedule:
-    # cada 30 minutos. Ojo: el cron de GitHub Actions es orientativo y en el
-    # plan gratuito se retrasa con frecuencia 10-20 minutos.
-    - cron: "*/30 * * * *"
+    # Medido del 7 al 16 de septiembre de 2026: pedimos cada 30 minutos (48
+    # ejecuciones al dia) y GitHub ejecutaba entre 6 y 8. En el plan gratuito
+    # las ejecuciones programadas son lo primero que se descarta, y el minuto
+    # 0 y el 30 son justo los mas congestionados porque es donde programa
+    # todo el mundo. De ahi los minutos 13 y 43: no arregla el recorte, pero
+    # es lo unico que esta en nuestra mano sin cambiar de sitio.
+    - cron: "13,43 * * * *"
   workflow_dispatch:      # permite lanzarlo a mano desde la web
     inputs:
       seed:

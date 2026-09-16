@@ -47,7 +47,7 @@
     },
     {
       "nombre": "macbook-air-m2",
-      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m2&lang=es&sz=48",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m2&lang=es&sz=500",
       "activa": true,
       "_nota": "Exigir 'macbook air' descarta los mac mini ('ordenador apple mac mini m2') y los MacBook Pro, que es todo el ruido que devuelve esta busqueda.",
       "keywords_todas": [
@@ -66,7 +66,7 @@
     },
     {
       "nombre": "macbook-air-m3",
-      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m3&lang=es&sz=48",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m3&lang=es&sz=500",
       "activa": true,
       "_nota": "Exigir 'macbook air' descarta los MacBook Pro M3 y, sobre todo, el MacBook de 2017 con procesador Intel 'core m3', que no tiene nada que ver con el chip M3 de Apple.",
       "keywords_todas": [
@@ -86,7 +86,7 @@
     },
     {
       "nombre": "ipad-pro-m5",
-      "url": "https://www.cashconverters.es/es/es/search/?q=ipad+pro+m5&lang=es&sz=48",
+      "url": "https://www.cashconverters.es/es/es/search/?q=ipad+pro+m5&lang=es&sz=500",
       "activa": true,
       "_nota": "Aqui el buscador SI respeta el token m5: los 12 resultados son iPad Pro M5 reales. Ojo con el formato del chip, que varia: 'ipad pro m5 (wi-fi)' y tambien 'ipad pro 13-inch (m5)'.",
       "keywords_todas": [
@@ -105,7 +105,7 @@
     },
     {
       "nombre": "macbook-air-m5",
-      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m5&lang=es&sz=48",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m5&lang=es&sz=500",
       "activa": true,
       "_nota": "Busqueda precisa: hoy devuelve 1 resultado y es un Air M5 real.",
       "keywords_todas": [
@@ -124,7 +124,7 @@
     },
     {
       "nombre": "macbook-pro-m4",
-      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro+m4&lang=es&sz=48",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro+m4&lang=es&sz=500",
       "activa": true,
       "_nota": "Busqueda precisa: hoy devuelve 1 resultado y es un MacBook Pro M4 Pro real. Filtrar por 'm4' a secas cubre las tres variantes del chip: M4, M4 Pro y M4 Max.",
       "keywords_todas": [
@@ -143,7 +143,7 @@
     },
     {
       "nombre": "macbook-pro-m5",
-      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro+m5&lang=es&sz=48",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro+m5&lang=es&sz=500",
       "activa": true,
       "_nota": "Busqueda precisa: hoy devuelve 1 resultado y es un MacBook Pro M5 real. Igual que el M4, cubre tambien un futuro M5 Pro o M5 Max.",
       "keywords_todas": [

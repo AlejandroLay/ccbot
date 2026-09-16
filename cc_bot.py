@@ -179,7 +179,7 @@ def _desde_tiles(html: str) -> list[dict]:
             "precio": _precio_de_tile(tile),
             "precio_antes": _precio_antes_de_tile(tile),
             "estado": _estado_de_tile(tile),
-            "url": _absoluta(href),
+            "url": _url_de_producto(pid, href),
             "imagen": _imagen_de_tile(tile),
         })
     return items
@@ -375,6 +375,28 @@ def _a_float(valor):
         return float(s)
     except ValueError:
         return None
+
+
+def _url_de_producto(pid: str, href: str) -> str:
+    """Enlace a la FICHA de la unidad concreta, no al listado donde aparece.
+
+    Muchos tiles no enlazan a la ficha, sino a la categoria con la unidad
+    marcada al final:
+
+        /comprar/videojuegos-y-consolas/ps5/consolas/playstation-5/?firstProduct=CF001_E56200_0
+
+    Si mandas eso por Discord, el aviso te deja en una lista de 26 consolas y
+    tienes que buscar a mano cual era. La ficha de cada unidad vive siempre en
+    /segunda-mano/<pid>.html, asi que cuando el href no es ya una ficha la
+    reconstruimos a partir del pid.
+
+    Lo que distingue a una ficha es que su ruta acaba en .html; los enlaces a
+    listado son la ruta de la categoria mas ?firstProduct=<pid>.
+    """
+    ruta = href.split("?")[0].split("#")[0]
+    if ruta.endswith(".html"):
+        return _absoluta(href)
+    return f"https://www.cashconverters.es/es/es/segunda-mano/{pid}.html"
 
 
 def _absoluta(url: str) -> str:
