@@ -109,3 +109,47 @@ jobs:
           done
 
           echo "Vigilancia terminada: $pasada pasada(s)."
+          echo "ARRANCADA=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Relevar con la siguiente vigilancia
+        # Sin esto, la siguiente vigilancia solo empieza cuando el cron de
+        # GitHub tiene a bien entrar, que en el plan gratuito son 2-4 horas de
+        # hueco. Con el relevo, la cadena no se rompe nunca.
+        if: always()
+        env:
+          PAT: ${{ secrets.PAT_CCBOT }}
+          INICIO: ${{ github.event.repository.pushed_at }}
+        run: |
+          set -u
+          if [ -z "${PAT:-}" ]; then
+            echo "::warning::Sin el secret PAT_CCBOT no hay relevo: la siguiente"
+            echo "::warning::vigilancia depende del cron de GitHub, que en el plan"
+            echo "::warning::gratuito entra cada 2-4 horas. Habra huecos sin vigilar."
+            exit 0
+          fi
+
+          # Cinturon de seguridad: si el trabajo ha muerto en el primer cuarto
+          # de hora, algo va mal (config roto, bloqueo del WAF). Relevar aqui
+          # seria encadenar ejecuciones fallidas sin parar, asi que dejamos que
+          # el cron lo recupere y que el fallo se vea.
+          vivido=$(( $(date +%s) - ${ARRANCADA:-0} ))
+          if [ "${ARRANCADA:-0}" = "0" ]; then
+            echo "::warning::La vigilancia no llego a terminar bien. No relevo, para"
+            echo "::warning::no encadenar fallos; el cron reanudara la cadena."
+            exit 0
+          fi
+
+          codigo=$(curl -sS -o /tmp/relevo.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $PAT" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/ccbot.yml/dispatches" \
+            -d '{"ref":"main"}')
+          if [ "$codigo" = "204" ]; then
+            echo "Relevo lanzado: la siguiente vigilancia arranca al cerrar esta."
+          else
+            echo "::error::El relevo ha fallado (HTTP $codigo). Revisa que PAT_CCBOT"
+            echo "::error::siga vigente y con permiso de Actions: leer y escribir."
+            cat /tmp/relevo.json || true
+            exit 1
+          fi
