@@ -37,7 +37,12 @@ LOG_FILE = BASE_DIR / "cc_bot.log"
 
 RETENCION_DIAS = 30           # dias que se recuerda un producto como "visto"
 MAX_REINTENTOS = 3            # reintentos de descarga por fallo de red
-ESPERA_ENTRE_BUSQUEDAS = 5    # segundos de pausa entre una busqueda y la siguiente
+ESPERA_ENTRE_BUSQUEDAS = 2    # segundos de pausa entre una busqueda y la siguiente
+# Con 8 busquedas, cada segundo de pausa son 7 segundos de ejecucion. GitHub
+# factura por minutos redondeando hacia arriba, asi que bajar de 5s a 2s hace
+# que el trabajo entre en 1 minuto en vez de 2: el doble de ejecuciones con
+# los mismos 2.000 minutos gratuitos. 2s entre peticiones sigue siendo mas
+# suave que una persona navegando.
 TIMEOUT_DESCARGA = 30
 EMBEDS_POR_MENSAJE = 10       # limite de Discord
 
