@@ -21,7 +21,11 @@ on:
       vigilancia_minutos:
         description: "Vigilancia continua: minutos que se queda dando pasadas (0 = una sola pasada)"
         type: string
-        default: "0"
+        # 330 y no 0 A PROPOSITO. El relevo lanza la siguiente vigilancia por
+        # API y los inputs que no se envian toman ESTE valor. Con default 0,
+        # cada relevo haria una pasada de minuto y medio y volveria a relevarse:
+        # un bucle infinito de ejecuciones que acabaria con la cuenta limitada.
+        default: "330"
       intervalo_segundos:
         description: "Segundos entre pasadas cuando hay vigilancia continua"
         type: string
@@ -60,6 +64,9 @@ jobs:
           SEED: ${{ inputs.seed }}
         run: |
           set -u
+          # Marca de arranque, para que el relevo pueda saber cuanto ha vivido
+          # esta vigilancia y negarse a encadenar ejecuciones que mueren rapido.
+          echo "INICIO_VIGILANCIA=$(date +%s)" >> "$GITHUB_ENV"
           # En las ejecuciones programadas los inputs llegan vacios. Por defecto
           # vigilamos 330 minutos: asi UNA ejecucion cubre cinco horas y media
           # dando pasadas cada 5 minutos, y la siguiente programada, que espera
@@ -109,7 +116,7 @@ jobs:
           done
 
           echo "Vigilancia terminada: $pasada pasada(s)."
-          echo "ARRANCADA=$(date +%s)" >> "$GITHUB_ENV"
+          echo "VIGILANCIA_OK=1" >> "$GITHUB_ENV"
 
       - name: Relevar con la siguiente vigilancia
         # Sin esto, la siguiente vigilancia solo empieza cuando el cron de
@@ -118,7 +125,7 @@ jobs:
         if: always()
         env:
           PAT: ${{ secrets.PAT_CCBOT }}
-          INICIO: ${{ github.event.repository.pushed_at }}
+          MINIMO_PARA_RELEVAR: "1800"   # 30 minutos
         run: |
           set -u
           if [ -z "${PAT:-}" ]; then
@@ -128,23 +135,33 @@ jobs:
             exit 0
           fi
 
-          # Cinturon de seguridad: si el trabajo ha muerto en el primer cuarto
-          # de hora, algo va mal (config roto, bloqueo del WAF). Relevar aqui
-          # seria encadenar ejecuciones fallidas sin parar, asi que dejamos que
-          # el cron lo recupere y que el fallo se vea.
-          vivido=$(( $(date +%s) - ${ARRANCADA:-0} ))
-          if [ "${ARRANCADA:-0}" = "0" ]; then
-            echo "::warning::La vigilancia no llego a terminar bien. No relevo, para"
-            echo "::warning::no encadenar fallos; el cron reanudara la cadena."
+          # Cinturon de seguridad contra el bucle infinito: solo se releva a una
+          # vigilancia que haya terminado bien Y haya durado mas de media hora.
+          # Si algo esta roto (config invalida, WAF bloqueando) la ejecucion
+          # muere en un minuto, y encadenar seria lanzar ejecuciones sin parar.
+          # En ese caso callamos y deja que el cron reanude, con el fallo a la
+          # vista en rojo.
+          if [ "${VIGILANCIA_OK:-0}" != "1" ]; then
+            echo "::warning::La vigilancia no termino bien: no relevo para no"
+            echo "::warning::encadenar fallos. El cron reanudara la cadena."
+            exit 0
+          fi
+          vivido=$(( $(date +%s) - ${INICIO_VIGILANCIA:-0} ))
+          if [ "$vivido" -lt "$MINIMO_PARA_RELEVAR" ]; then
+            echo "::warning::La vigilancia solo ha durado ${vivido}s (minimo para"
+            echo "::warning::relevar: ${MINIMO_PARA_RELEVAR}s). No relevo, por si es"
+            echo "::warning::un fallo que se repetiria en bucle."
             exit 0
           fi
 
+          # Los inputs van explicitos: lo que no se manda toma el default del
+          # workflow, y depender de eso es como se cuela un bucle infinito.
           codigo=$(curl -sS -o /tmp/relevo.json -w '%{http_code}' -X POST \
             -H "Authorization: Bearer $PAT" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${{ github.repository }}/actions/workflows/ccbot.yml/dispatches" \
-            -d '{"ref":"main"}')
+            -d '{"ref":"main","inputs":{"vigilancia_minutos":"330","intervalo_segundos":"300"}}')
           if [ "$codigo" = "204" ]; then
             echo "Relevo lanzado: la siguiente vigilancia arranca al cerrar esta."
           else
