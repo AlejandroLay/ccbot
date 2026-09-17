@@ -85,22 +85,45 @@ jobs:
           fin=$(( $(date +%s) + MINUTOS * 60 ))
           pasada=0
 
+          # Partir SIEMPRE del estado publicado en main, no del que trajo el
+          # checkout. Esto arreglo un duplicado real: una ejecucion en cola
+          # arranca con el commit del momento en que se ENCOLO, no del actual.
+          # La del 17/09 se encolo a las 01:38 y arranco a las 05:13, asi que
+          # llego con la memoria de las 01:38 e ignoro 53 commits de estado:
+          # volvio a cantar como nuevos tres productos ya avisados a las 02:02,
+          # y al guardar sobrescribio la memoria buena con la foto vieja.
+          sincronizar_estado() {
+            git fetch -q origin main 2>/dev/null || return 0
+            git reset --hard -q origin/main 2>/dev/null || true
+          }
+
           guardar_estado() {
             # Latido: cambia una vez al dia, asi que garantiza un commit diario.
             # Sin actividad 60 dias, GitHub desactiva los workflows programados.
             date -u +%Y-%m-%d > state/_latido.txt
             git add state/
-            if ! git diff --staged --quiet; then
-              git commit -q -m "Estado: $(date -u +'%Y-%m-%d %H:%M') UTC"
-              # Otra ejecucion puede haber publicado estado mientras tanto.
-              git pull --rebase -q || { git rebase --abort 2>/dev/null || true; git reset --hard -q origin/main; return 0; }
-              git push -q || true
-            fi
+            git diff --staged --quiet && return 0
+            git commit -q -m "Estado: $(date -u +'%Y-%m-%d %H:%M') UTC"
+            # OJO: aqui NUNCA un reset --hard. Lo habia, y al fallar el push se
+            # llevaba por delante los pids recien guardados, con lo que esos
+            # productos volvian a salir como nuevos en la pasada siguiente.
+            # Lo correcto es reaplicar nuestro commit encima de lo publicado.
+            for intento in 1 2 3; do
+              git push -q 2>/dev/null && return 0
+              git fetch -q origin main 2>/dev/null || true
+              if ! git rebase -q origin/main 2>/dev/null; then
+                git rebase --abort 2>/dev/null || true
+                echo "::warning::Conflicto guardando el estado; se reintenta en la proxima pasada."
+                return 0
+              fi
+            done
+            echo "::warning::No se pudo publicar el estado tras 3 intentos."
           }
 
           while :; do
             pasada=$(( pasada + 1 ))
             echo "::group::pasada $pasada  $(date -u +'%H:%M:%S') UTC"
+            sincronizar_estado
             # Una pasada que falle no debe cortar la vigilancia: el bot ya
             # registra el ERROR y seguimos con la siguiente.
             python cc_bot.py $FLAGS || echo "La pasada $pasada ha fallado, continuo"
