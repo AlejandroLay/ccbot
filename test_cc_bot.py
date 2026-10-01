@@ -726,6 +726,7 @@ FICHA_HTML = """
   <li class="attribute-values"><span class="label">procesador:</span><span class="value">m4</span></li>
   <li class="attribute-values"><span class="label">capacidad ssd:</span><span class="value">256.0</span></li>
   <li class="attribute-values"><span class="label">capacidad hdd:</span><span class="value">0.0</span></li>
+  <li class="attribute-values"><span class="label">apple care:</span><span class="value">Sí</span></li>
 </ul></div>
 """
 
@@ -759,10 +760,55 @@ def test_formato_de_las_especificaciones(nombre, valor, esperado):
 
 def test_los_campos_salen_en_orden_y_sin_los_que_faltan():
     campos = cc_bot._campos_de_ficha(cc_bot._parsear_ficha(FICHA_HTML))
-    assert [c["name"] for c in campos] == ["Chip", "Pantalla", "RAM", "Almacenamiento", "Teclado", "Año"]
+    # AppleCare primero: es el dato que mas pesa al decidir la compra.
+    assert [c["name"] for c in campos] == [
+        "AppleCare", "Chip", "Pantalla", "RAM", "Almacenamiento", "Teclado", "Año",
+    ]
     valores = {c["name"]: c["value"] for c in campos}
     assert valores["Almacenamiento"] == "256 GB"   # el ssd, no el hdd de 0.0
     assert valores["Teclado"] == "Español"
+
+
+# ---------------------------------------------------------------------------
+# AppleCare. La web lo publica como atributo "apple care" con valor Si/No.
+# Que un portatil de 900 euros tenga garantia de Apple o no cambia la compra,
+# asi que va en el aviso y se tiene que leer de un golpe de vista.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("valor, esperado", [
+    ("Sí", "✅ Sí"),
+    ("sí", "✅ Sí"),
+    ("Si", "✅ Sí"),      # por si algun dia lo escriben sin tilde
+    ("SÍ", "✅ Sí"),
+    ("No", "❌ No"),
+    ("no", "❌ No"),
+])
+def test_applecare_se_lee_de_un_vistazo(valor, esperado):
+    assert cc_bot._formatear_spec("AppleCare", valor) == esperado
+
+
+def test_applecare_con_un_valor_inesperado_se_enseña_tal_cual():
+    """Si cambian el formato (una fecha, 'Hasta 2027'...), mejor enseñarlo
+    que tragarselo: un dato raro visible se arregla, uno oculto no."""
+    assert cc_bot._formatear_spec("AppleCare", "hasta 2027") == "Hasta 2027"
+
+
+@pytest.mark.parametrize("ficha, esperado", [
+    ({"apple care": "Sí"}, "✅ Sí"),
+    ({"apple care": "No"}, "❌ No"),
+    ({"applecare": "Sí"}, "✅ Sí"),        # variante por si cambian la etiqueta
+    ({"apple care+": "Sí"}, "✅ Sí"),
+])
+def test_applecare_llega_al_aviso(ficha, esperado):
+    campos = {c["name"]: c["value"] for c in cc_bot._campos_de_ficha(ficha)}
+    assert campos["AppleCare"] == esperado
+
+
+def test_sin_applecare_en_la_ficha_no_se_inventa_el_campo():
+    """12 de 21 fichas del muestreo no publican el dato. Callar es correcto:
+    poner 'No' cuando la web no lo dice seria mentir."""
+    campos = {c["name"] for c in cc_bot._campos_de_ficha({"procesador": "m4"})}
+    assert "AppleCare" not in campos
 
 
 def test_un_ipad_no_enseña_campos_que_no_tiene():

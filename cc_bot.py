@@ -543,6 +543,10 @@ def _titulo_legible(titulo: str) -> str:
 # Que campos de la ficha se enseñan y en que orden. Se pintan solo los que
 # el producto tenga: un iPad no trae teclado y una consola no trae RAM.
 CAMPOS_FICHA = [
+    # Primero el AppleCare, que es lo que cambia la decision de compra. La web
+    # lo publica como atributo "apple care" con valor Si/No, y no todas las
+    # fichas lo traen (9 de 21 en el muestreo): las que no, no pintan el campo.
+    ("AppleCare", ("apple care", "applecare", "apple care+")),
     ("Chip", ("procesador",)),
     ("Pantalla", ("pulgadas",)),
     ("RAM", ("memoria ram",)),
@@ -565,6 +569,13 @@ def _formatear_spec(nombre: str, valor: str) -> str:
         return f"{numero:.0f}"
     if nombre == "Chip":
         return valor.upper() if len(valor) <= 6 else valor.capitalize()
+    if nombre == "AppleCare":
+        # Que se vea de un golpe de vista sin leer, que es para lo que sirve.
+        if normalizar(valor).startswith("si"):
+            return "✅ Sí"
+        if normalizar(valor).startswith("no"):
+            return "❌ No"
+        return valor.capitalize()   # cualquier otro valor, tal cual lo diga la web
     return valor.capitalize()
 
 
