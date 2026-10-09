@@ -142,6 +142,18 @@
       ]
     },
     {
+      "nombre": "apple-watch-ultra-3",
+      "url": "https://www.cashconverters.es/es/es/search/?q=apple+watch+ultra+3&lang=es&sz=500",
+      "activa": true,
+      "_nota": "Titulo real, identico en las 68 unidades: 'apple watch ultra 3 49mm (gps 5g) titanio'. La busqueda es limpia: los 68 resultados son Ultra 3 y no hay un solo accesorio, pero se dejan las exclusiones por si entra una correa. ESTE AVISO SI LLEVA TOPE DE PRECIO, al contrario que los demas: hay 68 unidades en stock agrupadas en escalones (568,95 x6 / 628,95 x25 / 684,95 x22 / 714,95 x4), asi que avisar de cada una que entra seria ruido, cuando puedes comprar una cualquier dia. El aviso solo vale si es barata: con tope 600 pasan 8 de 68 (el escalon de 566-599). Subir a 620 serian 11 de 68; a 629, la mitad del catalogo. La URL original del usuario traia sz=24 y orden por precio, o sea solo las 24 mas baratas de 68: una unidad nueva por encima de ese corte habria sido invisible.",
+      "keywords_todas": ["watch ultra 3"],
+      "keywords_ninguna": [
+        "correa", "pulsera", "banda", "funda", "cargador", "cable",
+        "protector", "adaptador", "soporte"
+      ],
+      "precio_max": 600
+    },
+    {
       "nombre": "iphone-air-1tb",
       "url": "https://www.cashconverters.es/es/es/search/?q=iphone+air&lang=es&sz=500",
       "activa": true,

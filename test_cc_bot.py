@@ -805,6 +805,49 @@ def test_applecare_llega_al_aviso(ficha, esperado):
 
 
 # ---------------------------------------------------------------------------
+# Apple Watch Ultra 3. Las 68 unidades del catalogo tienen el mismo titulo, y
+# por eso este aviso si lleva tope de precio: con tanto stock, avisar de una a
+# 715 EUR cuando hay otra a 566 seria ruido.
+# ---------------------------------------------------------------------------
+
+BUSQUEDA_ULTRA_3 = {
+    "keywords_todas": ["watch ultra 3"],
+    "keywords_ninguna": ["correa", "pulsera", "banda", "funda", "cargador",
+                         "cable", "protector", "adaptador", "soporte"],
+    "precio_max": 600,
+}
+
+TITULO_ULTRA_3 = "apple watch ultra 3 49mm (gps 5g) titanio"
+
+
+@pytest.mark.parametrize("precio, avisa", [
+    (566.05, True),     # la mas barata de hoy
+    (598.95, True),
+    (600.0, True),      # el tope es inclusivo
+    (628.95, False),    # el escalon con mas stock: no es ganga
+    (714.95, False),
+])
+def test_el_ultra_3_solo_avisa_si_esta_barato(precio, avisa):
+    assert cc_bot.pasa_filtros(_item(TITULO_ULTRA_3, precio), BUSQUEDA_ULTRA_3) is avisa
+
+
+@pytest.mark.parametrize("titulo", [
+    "apple watch ultra 2 49mm (gps 5g) titanio",   # la generacion anterior
+    "apple watch series 11 46mm",
+    "correa apple watch ultra 3 titanio",
+    "cargador apple watch ultra 3",
+])
+def test_el_ultra_3_descarta_otras_generaciones_y_accesorios(titulo):
+    assert not cc_bot.pasa_filtros(_item(titulo, 450.0), BUSQUEDA_ULTRA_3)
+
+
+def test_un_ultra_3_sin_precio_legible_avisa_igual():
+    """Si no se puede leer el precio, mejor un aviso de mas que perder la ganga."""
+    item = {"id": "1", "titulo": TITULO_ULTRA_3, "precio": None, "url": "u", "imagen": None}
+    assert cc_bot.pasa_filtros(item, BUSQUEDA_ULTRA_3)
+
+
+# ---------------------------------------------------------------------------
 # iPhone Air de 1TB. Titulos reales del catalogo: la capacidad va en el titulo
 # ("apple iphone air 1tb"), asi que se puede filtrar sin abrir la ficha. Se
 # descartan las capacidades menores en vez de exigir "1tb", para que un
