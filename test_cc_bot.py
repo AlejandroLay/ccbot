@@ -904,6 +904,45 @@ def test_descarta_las_demas_generaciones_de_ipad_mini(titulo):
 
 
 # ---------------------------------------------------------------------------
+# Sony Alpha A6700. Buscar "sony a6700" en la web devuelve 12 A6000 y ningun
+# A6700, asi que se vigila la familia entera y se filtra aqui. El patron real
+# de los titulos es "camara digital evil sony alpha a6000 (ilce-6000)": el
+# modelo puede venir como "a6700", como "(ilce-6700)" o de las dos formas, y
+# por eso el filtro pide "6700" a secas.
+# ---------------------------------------------------------------------------
+
+BUSQUEDA_A6700 = {
+    "keywords_todas": ["sony", "6700"],
+    "keywords_ninguna": ["funda", "bolsa", "correa", "bateria", "cargador",
+                         "tarjeta", "adaptador", "tripode", "empuñadura", "flash"],
+}
+
+
+@pytest.mark.parametrize("titulo", [
+    "camara digital evil sony alpha a6700 (ilce-6700)",
+    "camara digital evil sony alpha (ilce-6700) 26mp",       # solo el codigo
+    # los kits con objetivo entran a proposito: siguen siendo la camara
+    "camara digital evil sony alpha a6700 (ilce-6700)+16-50mm 1:3.5-5.6 oss",
+])
+def test_avisa_del_a6700_en_cualquiera_de_sus_formas(titulo):
+    assert cc_bot.pasa_filtros(_item(titulo, 1250.0), BUSQUEDA_A6700)
+
+
+@pytest.mark.parametrize("titulo", [
+    # lo que de verdad devuelve la web al buscar "sony a6700"
+    "camara digital evil sony alpha a6000 (ilce-6000)",
+    "camara digital evil sony alpha a6000 (ilce-6000)+16-50mm 1:3.5-5.6 oss",
+    "camara digital evil sony alpha a6600 (ilce-6600)",
+    "camara digital evil sony alpha a6400 (ilce-6400)",
+    "camara digital evil canon eos 6700",        # otra marca
+    "funda sony a6700",
+    "bateria sony np-fz100 a6700",
+])
+def test_descarta_las_demas_camaras_y_los_accesorios(titulo):
+    assert not cc_bot.pasa_filtros(_item(titulo, 1250.0), BUSQUEDA_A6700)
+
+
+# ---------------------------------------------------------------------------
 # iPhone Air de 1TB. Titulos reales del catalogo: la capacidad va en el titulo
 # ("apple iphone air 1tb"), asi que se puede filtrar sin abrir la ficha. Se
 # descartan las capacidades menores en vez de exigir "1tb", para que un

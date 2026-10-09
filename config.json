@@ -238,6 +238,28 @@
         "carcasa",
         "adaptador"
       ]
+    },
+    {
+      "nombre": "sony-a6700",
+      "url": "https://www.cashconverters.es/es/es/search/?q=sony+alpha&lang=es&sz=500",
+      "activa": true,
+      "_nota": "Camara Sony Alpha A6700. OJO: buscar 'sony a6700' es inutil, devuelve 12 productos y NINGUNO es un A6700, son todos A6000 (una camara mucho mas vieja y barata). El buscador ignora el modelo y da parecidos, igual que hacia con 'macbook air m4'. Por eso se busca 'sony alpha', que trae la familia completa (103 unidades, 1,28 MB: a6000, a6400, a6500, a6600, a7, a7r...), y se filtra aqui. Asi un A6700 aparece sin depender de como trate el buscador el modelo. El filtro exige 'sony' y '6700' a secas, no 'a6700': el patron real de los titulos es 'camara digital evil sony alpha a6000 (ilce-6000)', asi que un A6700 puede venir como 'a6700', como '(ilce-6700)' o de las dos formas, y '6700' cubre todas. Comprobado que no colisiona: ningun titulo de los 103 contiene 6700, y los A6000 llevan 6000. Los kits con objetivo PASAN a proposito ('+16-50mm'), que siguen siendo la camara. Sin tope de precio: hoy no hay ninguna unidad en el catalogo, es un modelo escaso, y cualquier entrada merece saberse.",
+      "keywords_todas": [
+        "sony",
+        "6700"
+      ],
+      "keywords_ninguna": [
+        "funda",
+        "bolsa",
+        "correa",
+        "bateria",
+        "cargador",
+        "tarjeta",
+        "adaptador",
+        "tripode",
+        "empuñadura",
+        "flash"
+      ]
     }
   ]
 }
