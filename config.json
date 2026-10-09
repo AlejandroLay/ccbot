@@ -145,7 +145,7 @@
       "nombre": "apple-watch-ultra-3",
       "url": "https://www.cashconverters.es/es/es/search/?q=apple+watch+ultra+3&lang=es&sz=500",
       "activa": true,
-      "_nota": "Titulo real, identico en las 68 unidades: 'apple watch ultra 3 49mm (gps 5g) titanio'. La busqueda es limpia: los 68 resultados son Ultra 3 y no hay un solo accesorio, pero se dejan las exclusiones por si entra una correa. ESTE AVISO SI LLEVA TOPE DE PRECIO, al contrario que los demas, porque hay 68 unidades en stock y avisar de cada entrada seria ruido: puedes comprar una cualquier dia. Tope en 640 por lo que cuenta el usuario: una Ultra 3 con bateria al 100% se vende hoy a unos 600, y una con correa de titanio vale algo mas, asi que la franja 600-640 puede esconder una ganga con correa buena. Comprobado en fichas reales: el precio NO correlaciona con la bateria (hay unidades al 100% a 568,95 y al 100% a 714,95), asi que las baratas son gangas de verdad y no cacharros gastados. La correa de titanio NO figura en ningun atributo de la ficha: lo unico parecido es un campo 'color' que a veces dice titanio, nada fiable; se ve en la foto, que el aviso ya lleva. Escalones de precio: 568,95 x6 / 628,95 x25 / 684,95 x22 / 714,95 x4. Con tope 600 pasaban 8 de 68; con 640, 36 de 68. La URL original del usuario traia sz=24 y orden por precio, o sea solo las 24 mas baratas de 68: una unidad nueva por encima de ese corte habria sido invisible.",
+      "_nota": "Titulo real, identico en las 68 unidades: 'apple watch ultra 3 49mm (gps 5g) titanio'. La busqueda es limpia: los 68 resultados son Ultra 3 y no hay un solo accesorio, pero se dejan las exclusiones por si entra una correa. TOPE EN 550 por decision del usuario: una Ultra 3 con bateria al 100% se vende hoy a unos 600, asi que por debajo de 550 es ganga clara, con correa o sin ella y con la bateria que sea. No se filtra por bateria ni por correa A PROPOSITO: el aviso lleva esos datos y la valoracion la hace el usuario. Comprobado que el precio NO correlaciona con la bateria (hay unidades al 100% a 568,95 y al 100% a 714,95), asi que una barata no implica cacharro gastado. Ojo: con tope 550 hoy no pasa ninguna, porque la mas barata del catalogo esta a 566,05. El silencio es el comportamiento correcto, no una averia: escalones de precio 568,95 x6 / 628,95 x25 / 684,95 x22 / 714,95 x4.",
       "keywords_todas": [
         "watch ultra 3"
       ],
@@ -160,7 +160,7 @@
         "adaptador",
         "soporte"
       ],
-      "precio_max": 640
+      "precio_max": 550
     },
     {
       "nombre": "iphone-air-1tb",

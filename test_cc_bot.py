@@ -814,24 +814,35 @@ BUSQUEDA_ULTRA_3 = {
     "keywords_todas": ["watch ultra 3"],
     "keywords_ninguna": ["correa", "pulsera", "banda", "funda", "cargador",
                          "cable", "protector", "adaptador", "soporte"],
-    "precio_max": 640,
+    "precio_max": 550,
 }
 
 TITULO_ULTRA_3 = "apple watch ultra 3 49mm (gps 5g) titanio"
 
 
 @pytest.mark.parametrize("precio, avisa", [
-    (566.05, True),     # la mas barata de hoy
-    (598.95, True),
-    # Una Ultra 3 con bateria al 100% se vende a ~600. La franja 600-640 entra
-    # porque ahi puede haber una con correa de titanio, que vale mas.
-    (628.95, True),
-    (640.0, True),      # el tope es inclusivo
-    (648.95, False),
-    (714.95, False),    # el escalon alto: nunca es ganga
+    (480.0, True),
+    (549.0, True),
+    (550.0, True),      # el tope es inclusivo
+    # Por encima de 550 no avisa aunque sea el escalon mas barato del catalogo:
+    # a ~600 se vende una con bateria al 100%, asi que eso no es ganga.
+    (566.05, False),    # la mas barata que hay hoy
+    (628.95, False),
+    (714.95, False),
 ])
 def test_el_ultra_3_solo_avisa_si_esta_barato(precio, avisa):
     assert cc_bot.pasa_filtros(_item(TITULO_ULTRA_3, precio), BUSQUEDA_ULTRA_3) is avisa
+
+
+def test_el_ultra_3_no_se_filtra_por_bateria_ni_correa():
+    """Decision del usuario: avisar de todo lo que baje de 550 y valorar el
+    estado por su cuenta. El aviso lleva los datos; el filtro no los mira."""
+    barata_y_gastada = {"id": "1", "titulo": TITULO_ULTRA_3, "precio": 499.0,
+                        "url": "u", "imagen": None,
+                        "ficha": {"porcentaje de bateria": "82.0"}}
+    assert cc_bot.pasa_filtros(barata_y_gastada, BUSQUEDA_ULTRA_3)
+    campos = {c["name"]: c["value"] for c in cc_bot._campos_de_ficha(barata_y_gastada["ficha"])}
+    assert campos["Batería"] == "82 %"      # el dato llega, para que lo valore
 
 
 @pytest.mark.parametrize("titulo", [

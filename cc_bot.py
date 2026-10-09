@@ -558,6 +558,8 @@ CAMPOS_FICHA = [
     # que manda es la foto, que el aviso ya lleva.
     ("Color", ("color",)),
     ("Caja original", ("caja original",)),
+    # Que venga con cargador o no cambia lo que vale, sobre todo en un reloj.
+    ("Cargador", ("cargador", "cable cargador")),
     ("Chip", ("procesador",)),
     ("Pantalla", ("pulgadas",)),
     ("RAM", ("memoria ram",)),
