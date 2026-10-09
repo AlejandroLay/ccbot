@@ -30,6 +30,10 @@ on:
         description: "Segundos entre pasadas cuando hay vigilancia continua"
         type: string
         default: "300"
+      solo:
+        description: "Ejecutar solo esta busqueda, por nombre (vacio = todas)"
+        type: string
+        default: ""
 
 # Una sola ejecucion a la vez: dos procesos escribiendo el mismo estado se
 # pisarian. Las que lleguen mientras hay una en marcha esperan su turno y
@@ -62,6 +66,7 @@ jobs:
           MINUTOS: ${{ inputs.vigilancia_minutos }}
           INTERVALO: ${{ inputs.intervalo_segundos }}
           SEED: ${{ inputs.seed }}
+          SOLO: ${{ inputs.solo }}
         run: |
           set -u
           # Marca de arranque, para que el relevo pueda saber cuanto ha vivido
@@ -78,6 +83,8 @@ jobs:
           [ -z "${INTERVALO:-}" ] && INTERVALO=300
           FLAGS=""
           [ "${SEED:-false}" = "true" ] && FLAGS="--seed"
+          # Para sembrar UNA busqueda recien añadida sin silenciar las demas.
+          [ -n "${SOLO:-}" ] && FLAGS="$FLAGS --solo $SOLO"
 
           git config user.name "ccbot"
           git config user.email "ccbot@users.noreply.github.com"
@@ -122,6 +129,7 @@ jobs:
 
           while :; do
             pasada=$(( pasada + 1 ))
+            inicio_pasada=$(date +%s)
             echo "::group::pasada $pasada  $(date -u +'%H:%M:%S') UTC"
             sincronizar_estado
             # Una pasada que falle no debe cortar la vigilancia: el bot ya
@@ -132,10 +140,25 @@ jobs:
 
             ahora=$(date +%s)
             [ "$ahora" -ge "$fin" ] && break
+
+            # La espera descuenta lo que ha tardado la pasada. Antes se dormian
+            # los 300s ENTEROS despues del trabajo, asi que la cadencia real era
+            # 330s y empeoraba con cada busqueda nueva: 20 busquedas la habrian
+            # dejado en 6 minutos sin que nadie lo hubiera pedido. Asi se
+            # mantiene en 5 minutos clavados mientras el trabajo quepa dentro.
+            trabajo=$(( ahora - inicio_pasada ))
+            espera=$(( INTERVALO - trabajo ))
+            # Suelo de cortesia: si algun dia el trabajo pasa del intervalo, no
+            # encadenamos peticiones sin respiro contra su servidor.
+            [ "$espera" -lt 30 ] && espera=30
+            if [ "$trabajo" -gt "$INTERVALO" ]; then
+              echo "::warning::La pasada ha tardado ${trabajo}s, mas que el intervalo"
+              echo "::warning::de ${INTERVALO}s. Hay demasiadas busquedas o van muy lentas."
+            fi
             # No dormir mas alla del final de la vigilancia.
             restante=$(( fin - ahora ))
-            [ "$restante" -lt "$INTERVALO" ] && INTERVALO="$restante"
-            sleep "$INTERVALO"
+            [ "$restante" -lt "$espera" ] && espera="$restante"
+            sleep "$espera"
           done
 
           echo "Vigilancia terminada: $pasada pasada(s)."
