@@ -547,6 +547,12 @@ CAMPOS_FICHA = [
     # lo publica como atributo "apple care" con valor Si/No, y no todas las
     # fichas lo traen (9 de 21 en el muestreo): las que no, no pintan el campo.
     ("AppleCare", ("apple care", "applecare", "apple care+")),
+    # Los moviles no traen AppleCare, pero traen esto, que para un iPhone de
+    # segunda mano pesa lo mismo al decidir: una batería al 85% o un terminal
+    # atado a un operador cambian la compra. Comprobado en fichas reales.
+    ("Batería", ("porcentaje de bateria", "vida útil batería mayor del 80%")),
+    ("Operador", ("operador",)),
+    ("Caja original", ("caja original",)),
     ("Chip", ("procesador",)),
     ("Pantalla", ("pulgadas",)),
     ("RAM", ("memoria ram",)),
@@ -569,6 +575,17 @@ def _formatear_spec(nombre: str, valor: str) -> str:
         return f"{numero:.0f}"
     if nombre == "Chip":
         return valor.upper() if len(valor) <= 6 else valor.capitalize()
+    if nombre == "Batería":
+        # La web da o el porcentaje exacto ("100.0") o solo un si/no a la
+        # pregunta de si pasa del 80%. Lo segundo es peor dato, pero es mejor
+        # que nada y hay que dejar claro que es una cota, no una medida.
+        if numero:
+            return f"{numero:g} %"
+        if normalizar(valor).startswith("si"):
+            return "más del 80 %"
+        if normalizar(valor).startswith("no"):
+            return "⚠️ menos del 80 %"
+        return valor.capitalize()
     if nombre == "AppleCare":
         # Que se vea de un golpe de vista sin leer, que es para lo que sirve.
         if normalizar(valor).startswith("si"):

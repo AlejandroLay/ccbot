@@ -142,6 +142,17 @@
       ]
     },
     {
+      "nombre": "iphone-air-1tb",
+      "url": "https://www.cashconverters.es/es/es/search/?q=iphone+air&lang=es&sz=500",
+      "activa": true,
+      "_nota": "Solo el iPhone Air de 1TB. Titulo real: 'apple iphone air 1tb'; las capacidades van en el titulo como 256gb/512gb/1tb. Se busca 'iphone air' (38 unidades, el catalogo entero) en vez de 'iphone air 1tb' (3 unidades) para que el buscador no pueda esconder una unidad segun como trate el token '1tb': eso es justo lo que fallaba con 'macbook air m4'. Cuesta 0,19 MB mas por pasada. El filtro va invertido por lo mismo: se descartan las capacidades menores en vez de exigir '1tb', asi caza tambien un '1024gb', un '2tb' o uno sin capacidad en el titulo, que con el filtro directo se perderian en silencio. Sin precio_max: hoy el 1TB va de 1.019 a 1.060 EUR y un minimo mal puesto solo podria silenciar la ganga.",
+      "keywords_todas": ["iphone air"],
+      "keywords_ninguna": [
+        "256gb", "512gb", "128gb", "64gb",
+        "funda", "cargador", "cable", "protector", "carcasa", "adaptador"
+      ]
+    },
+    {
       "nombre": "macbook-pro-m5",
       "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro+m5&lang=es&sz=500",
       "activa": true,

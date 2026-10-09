@@ -804,6 +804,94 @@ def test_applecare_llega_al_aviso(ficha, esperado):
     assert campos["AppleCare"] == esperado
 
 
+# ---------------------------------------------------------------------------
+# iPhone Air de 1TB. Titulos reales del catalogo: la capacidad va en el titulo
+# ("apple iphone air 1tb"), asi que se puede filtrar sin abrir la ficha. Se
+# descartan las capacidades menores en vez de exigir "1tb", para que un
+# "1024gb" o un "2tb" no se pierdan en silencio.
+# ---------------------------------------------------------------------------
+
+BUSQUEDA_AIR_1TB = {
+    "keywords_todas": ["iphone air"],
+    "keywords_ninguna": ["256gb", "512gb", "128gb", "64gb",
+                         "funda", "cargador", "cable", "protector",
+                         "carcasa", "adaptador"],
+}
+
+
+@pytest.mark.parametrize("titulo", [
+    "apple iphone air 1tb",
+    "apple iphone air 1024gb",      # si algun dia lo escriben asi
+    "apple iphone air 2tb",         # un futuro modelo mayor
+    "apple iphone air",             # sin capacidad: mejor avisar y que lo mire
+])
+def test_avisa_del_iphone_air_grande(titulo):
+    assert cc_bot.pasa_filtros(_item(titulo, 1059.95), BUSQUEDA_AIR_1TB)
+
+
+@pytest.mark.parametrize("titulo", [
+    "apple iphone air 256gb",
+    "apple iphone air 512gb",
+    "funda apple iphone air 1tb",
+    "cargador apple iphone air",
+    "apple iphone 17 pro 1tb",      # otro modelo, aunque sea de 1tb
+    "apple iphone 16 pro max 1tb",
+    "apple ipad air 1tb",           # el Air de iPad no es el de iPhone
+])
+def test_descarta_lo_que_no_es_un_iphone_air_de_1tb(titulo):
+    assert not cc_bot.pasa_filtros(_item(titulo, 1059.95), BUSQUEDA_AIR_1TB)
+
+
+# ---------------------------------------------------------------------------
+# Ficha de un movil. Los iPhone no publican AppleCare, pero si la bateria, el
+# operador y la caja original, que es lo que decide la compra de un movil
+# usado. Atributos copiados de fichas reales de iPhone Air.
+# ---------------------------------------------------------------------------
+
+FICHA_IPHONE = {
+    "operador": "libre",
+    "marca": "apple",
+    "capacidad": "1000.0",
+    "pulgadas": "6.5",
+    "porcentaje de bateria": "100.0",
+    "vida útil batería mayor del 80%": "Sí",
+    "numero de sim": "2 (dual-sim)",
+    "caja original": "Sí",
+    "memoria ram": "8.0",
+}
+
+
+def test_el_aviso_de_un_movil_enseña_bateria_operador_y_caja():
+    campos = {c["name"]: c["value"] for c in cc_bot._campos_de_ficha(FICHA_IPHONE)}
+    assert campos["Batería"] == "100 %"
+    assert campos["Operador"] == "Libre"
+    assert campos["Caja original"] == "Sí"
+    assert campos["Almacenamiento"] == "1 TB"
+    assert "AppleCare" not in campos        # los moviles no lo publican
+
+
+def test_sin_porcentaje_exacto_se_usa_la_cota_del_80():
+    """Algunas fichas solo responden si pasa del 80%, sin dar el numero."""
+    ficha = {k: v for k, v in FICHA_IPHONE.items() if k != "porcentaje de bateria"}
+    campos = {c["name"]: c["value"] for c in cc_bot._campos_de_ficha(ficha)}
+    assert campos["Batería"] == "más del 80 %"
+
+
+def test_bateria_por_debajo_del_80_se_marca():
+    ficha = {"vida útil batería mayor del 80%": "No"}
+    campos = {c["name"]: c["value"] for c in cc_bot._campos_de_ficha(ficha)}
+    assert campos["Batería"] == "⚠️ menos del 80 %"
+
+
+@pytest.mark.parametrize("valor, esperado", [
+    ("100.0", "100 %"),
+    ("87.0", "87 %"),
+    ("Sí", "más del 80 %"),
+])
+def test_formato_de_la_bateria(valor, esperado):
+    assert cc_bot._formatear_spec("Batería", valor) == esperado
+
+
 def test_sin_applecare_en_la_ficha_no_se_inventa_el_campo():
     """12 de 21 fichas del muestreo no publican el dato. Callar es correcto:
     poner 'No' cuando la web no lo dice seria mentir."""
