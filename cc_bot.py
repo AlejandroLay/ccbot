@@ -638,16 +638,8 @@ def _campos_de_ficha(ficha: dict) -> list[dict]:
     return campos
 
 
-def _embed_de(item: dict, nombre_busqueda: str, detectado: datetime,
-              referencia: str = "") -> dict:
-    """Un producto -> una tarjeta de Discord con los datos separados en campos.
-
-    'referencia' es el precio de mercado que el usuario anota en config.json
-    para esa busqueda. Se pinta arriba porque muchos productos tienen
-    variantes que mueven el precio (un iPad Pro M5 de 13 pulgadas con 5G no
-    se compara con el base de 11 y wifi), y asi el aviso trae la vara de
-    medir dentro en vez de obligar a recordarla.
-    """
+def _embed_de(item: dict, nombre_busqueda: str, detectado: datetime) -> dict:
+    """Un producto -> una tarjeta de Discord con los datos separados en campos."""
     precio = _euros(item.get("precio"))
     antes = item.get("precio_antes")
     if antes and item.get("precio") and antes > item["precio"]:
@@ -677,22 +669,19 @@ def _embed_de(item: dict, nombre_busqueda: str, detectado: datetime,
         "footer": {"text": f"Cash Converters · {nombre_busqueda}"},
         "timestamp": detectado.isoformat(),
     }
-    if referencia:
-        embed["description"] = f"📌 Referencia: {referencia}"
     if item.get("imagen"):
         embed["thumbnail"] = {"url": item["imagen"]}
     return embed
 
 
-def avisar(nuevos: list[dict], webhook_url: str, nombre_busqueda: str,
-           referencia: str = "") -> None:
+def avisar(nuevos: list[dict], webhook_url: str, nombre_busqueda: str) -> None:
     detectado = datetime.now(timezone.utc)
     lotes = [nuevos[i:i + EMBEDS_POR_MENSAJE] for i in range(0, len(nuevos), EMBEDS_POR_MENSAJE)]
     for lote in lotes:
         cuantos = f"**{len(lote)} producto{'s' if len(lote) > 1 else ''} nuevo{'s' if len(lote) > 1 else ''}**"
         payload = {
             "content": f"🆕 {cuantos} en `{nombre_busqueda}`",
-            "embeds": [_embed_de(i, nombre_busqueda, detectado, referencia) for i in lote],
+            "embeds": [_embed_de(i, nombre_busqueda, detectado) for i in lote],
         }
         r = creq.post(webhook_url, json=payload, timeout=20)
         if r.status_code == 429:  # rate limit de Discord
@@ -779,7 +768,7 @@ def procesar_busqueda(busqueda: dict, webhook_url: str, modo_dump: bool, modo_se
             if n:
                 time.sleep(1)   # cortesia entre fichas, no tras la ultima
             i["ficha"] = ficha_tecnica(i["url"])
-        avisar(nuevos, webhook_url, nombre, busqueda.get("referencia", ""))
+        avisar(nuevos, webhook_url, nombre)
     return True
 
 

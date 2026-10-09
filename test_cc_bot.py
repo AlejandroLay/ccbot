@@ -256,8 +256,7 @@ def entorno(tmp_path, monkeypatch):
     monkeypatch.setattr(cc_bot, "descargar", lambda url, intentos=3: _pagina(TILE_CON_REBAJA, TILE_IMG_SRC_ABSOLUTA))
 
     avisos = []
-    monkeypatch.setattr(cc_bot, "avisar",
-                        lambda nuevos, url, nombre, referencia="": avisos.append((nombre, list(nuevos))))
+    monkeypatch.setattr(cc_bot, "avisar", lambda nuevos, url, nombre: avisos.append((nombre, list(nuevos))))
     monkeypatch.setattr(cc_bot, "ficha_tecnica", lambda url: {})
     return tmp_path, avisos
 
@@ -1023,9 +1022,8 @@ def test_formato_de_la_bateria(valor, esperado):
 
 
 # ---------------------------------------------------------------------------
-# Variante del producto y precio de referencia. Un iPad Pro M5 de 13 pulgadas
-# con 5G no se compara con el base de 11 y wifi, asi que el aviso tiene que
-# decir que variante es y contra que precio compararla.
+# Variante del producto. Un iPad Pro M5 de 13 pulgadas con 5G no es el base de
+# 11 y wifi, asi que el aviso tiene que decir cual es.
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("valor, esperado", [
@@ -1056,25 +1054,6 @@ def test_ningun_campo_llega_vacio_a_discord():
     ficha = {"pulgadas": "1.0", "capacidad": "256.0", "tipo conexion de datos": "wifi"}
     for c in cc_bot._campos_de_ficha(ficha):
         assert c["value"].strip()
-
-
-def test_el_aviso_lleva_el_precio_de_referencia():
-    from datetime import datetime, timezone
-    item = {"id": "1", "titulo": "ipad pro m5 (wi-fi) (a3357) (11,0) 256gb",
-            "precio": 828.95, "precio_antes": None, "estado": "Perfecto",
-            "url": "u", "imagen": None, "ficha": {}}
-    embed = cc_bot._embed_de(item, "ipad-pro-m5",
-                             datetime(2026, 10, 9, 10, 0, tzinfo=timezone.utc),
-                             referencia="base Wi-Fi 11\" 256 GB ≈ 850 €")
-    assert "850" in embed["description"]
-
-
-def test_sin_referencia_el_aviso_no_lleva_descripcion():
-    from datetime import datetime, timezone
-    item = {"id": "1", "titulo": "algo", "precio": 10.0, "precio_antes": None,
-            "estado": None, "url": "u", "imagen": None, "ficha": {}}
-    embed = cc_bot._embed_de(item, "x", datetime(2026, 10, 9, tzinfo=timezone.utc))
-    assert "description" not in embed
 
 
 def test_sin_applecare_en_la_ficha_no_se_inventa_el_campo():
@@ -1159,17 +1138,16 @@ def test_el_aviso_de_ps5_del_config_real_usa_el_titulo_del_usuario():
 
 
 # ---------------------------------------------------------------------------
-# MacBook Pro M5 con filtro invertido. De las 121 unidades del catalogo, 2 no
-# dicen el chip en el titulo ("portatil apple apple macbook pro 2018"), y con
-# un filtro que exigiese "m5" esas serian invisibles. Se exige la familia y se
-# descartan los chips anteriores.
+# MacBook Pro M5. Filtro preciso: exigir el chip. Probe un filtro invertido
+# para cubrir las 2 unidades del catalogo que no dicen el chip en el titulo,
+# pero dejaba pasar Intel viejos ("macbook pro 2018") y el usuario prefiere no
+# recibir avisos de productos que no busca. Queda asumido que un M5 listado
+# sin el chip en el titulo no se detectaria.
 # ---------------------------------------------------------------------------
 
 BUSQUEDA_PRO_M5 = {
-    "keywords_todas": ["macbook pro"],
-    "keywords_ninguna": ["core i", "core 2", "i3", "i5", "i7", "i9",
-                         "m1", "m2", "m3", "m4",
-                         "funda", "cargador", "cable", "adaptador",
+    "keywords_todas": ["macbook pro", "m5"],
+    "keywords_ninguna": ["funda", "cargador", "cable", "adaptador",
                          "teclado", "carcasa", "bateria"],
 }
 
@@ -1177,23 +1155,20 @@ BUSQUEDA_PRO_M5 = {
 @pytest.mark.parametrize("titulo", [
     "portatil apple apple macbook pro m5",
     "portatil apple apple macbook pro m5 (a3434)",
-    "portatil apple apple macbook pro m5 pro 14-core 14",
-    "portatil apple apple macbook pro m6 (futuro chip)",
-    # el caso que motiva la inversion: sin chip en el titulo. Es un falso
-    # positivo asumido, porque la alternativa es perder un M5 sin etiquetar.
-    "portatil apple apple macbook pro 2018",
+    "portatil apple apple macbook pro m5 pro 14-core 14",      # M5 Pro
+    "portatil apple apple macbook pro m5 max 16-core 16",      # M5 Max
 ])
-def test_el_pro_m5_pasa_tambien_sin_chip_en_el_titulo(titulo):
+def test_el_pro_m5_cubre_las_tres_variantes_del_chip(titulo):
     assert cc_bot.pasa_filtros(_item(titulo, 1824.95), BUSQUEDA_PRO_M5)
 
 
 @pytest.mark.parametrize("titulo", [
     "portatil apple apple macbook pro core i5 2.3 13 (2017) (a1708)",
-    "portatil apple apple macbook pro i9 2.3ghz 16gb ram 1tb ssd",
+    "portatil apple apple macbook pro 2018",          # sin chip: no avisa
     "portatil apple apple macbook pro m1 pro 10-core 3.2 16",
     "portatil apple apple macbook pro m4 max 16-core 16 (40gpu)",
-    "portatil apple apple macbook air m5 16gb 1tb",      # un Air no es un Pro
+    "portatil apple apple macbook air m5 16gb 1tb",   # un Air no es un Pro
     "funda macbook pro 14",
 ])
-def test_el_pro_m5_descarta_los_chips_anteriores(titulo):
+def test_el_pro_m5_descarta_lo_que_no_es_un_m5(titulo):
     assert not cc_bot.pasa_filtros(_item(titulo, 1824.95), BUSQUEDA_PRO_M5)
