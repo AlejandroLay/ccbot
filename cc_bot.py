@@ -552,6 +552,11 @@ CAMPOS_FICHA = [
     # atado a un operador cambian la compra. Comprobado en fichas reales.
     ("Batería", ("porcentaje de bateria", "vida útil batería mayor del 80%")),
     ("Operador", ("operador",)),
+    # En los Apple Watch el color es la unica pista de la correa que publican
+    # ("titanio", "negro", "gris espacial"), y una correa de titanio sube el
+    # valor. No es fiable como filtro, pero como dato en el aviso ayuda; lo
+    # que manda es la foto, que el aviso ya lleva.
+    ("Color", ("color",)),
     ("Caja original", ("caja original",)),
     ("Chip", ("procesador",)),
     ("Pantalla", ("pulgadas",)),

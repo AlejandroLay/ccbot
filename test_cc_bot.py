@@ -814,7 +814,7 @@ BUSQUEDA_ULTRA_3 = {
     "keywords_todas": ["watch ultra 3"],
     "keywords_ninguna": ["correa", "pulsera", "banda", "funda", "cargador",
                          "cable", "protector", "adaptador", "soporte"],
-    "precio_max": 600,
+    "precio_max": 640,
 }
 
 TITULO_ULTRA_3 = "apple watch ultra 3 49mm (gps 5g) titanio"
@@ -823,9 +823,12 @@ TITULO_ULTRA_3 = "apple watch ultra 3 49mm (gps 5g) titanio"
 @pytest.mark.parametrize("precio, avisa", [
     (566.05, True),     # la mas barata de hoy
     (598.95, True),
-    (600.0, True),      # el tope es inclusivo
-    (628.95, False),    # el escalon con mas stock: no es ganga
-    (714.95, False),
+    # Una Ultra 3 con bateria al 100% se vende a ~600. La franja 600-640 entra
+    # porque ahi puede haber una con correa de titanio, que vale mas.
+    (628.95, True),
+    (640.0, True),      # el tope es inclusivo
+    (648.95, False),
+    (714.95, False),    # el escalon alto: nunca es ganga
 ])
 def test_el_ultra_3_solo_avisa_si_esta_barato(precio, avisa):
     assert cc_bot.pasa_filtros(_item(TITULO_ULTRA_3, precio), BUSQUEDA_ULTRA_3) is avisa

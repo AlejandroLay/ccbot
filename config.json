@@ -145,23 +145,42 @@
       "nombre": "apple-watch-ultra-3",
       "url": "https://www.cashconverters.es/es/es/search/?q=apple+watch+ultra+3&lang=es&sz=500",
       "activa": true,
-      "_nota": "Titulo real, identico en las 68 unidades: 'apple watch ultra 3 49mm (gps 5g) titanio'. La busqueda es limpia: los 68 resultados son Ultra 3 y no hay un solo accesorio, pero se dejan las exclusiones por si entra una correa. ESTE AVISO SI LLEVA TOPE DE PRECIO, al contrario que los demas: hay 68 unidades en stock agrupadas en escalones (568,95 x6 / 628,95 x25 / 684,95 x22 / 714,95 x4), asi que avisar de cada una que entra seria ruido, cuando puedes comprar una cualquier dia. El aviso solo vale si es barata: con tope 600 pasan 8 de 68 (el escalon de 566-599). Subir a 620 serian 11 de 68; a 629, la mitad del catalogo. La URL original del usuario traia sz=24 y orden por precio, o sea solo las 24 mas baratas de 68: una unidad nueva por encima de ese corte habria sido invisible.",
-      "keywords_todas": ["watch ultra 3"],
-      "keywords_ninguna": [
-        "correa", "pulsera", "banda", "funda", "cargador", "cable",
-        "protector", "adaptador", "soporte"
+      "_nota": "Titulo real, identico en las 68 unidades: 'apple watch ultra 3 49mm (gps 5g) titanio'. La busqueda es limpia: los 68 resultados son Ultra 3 y no hay un solo accesorio, pero se dejan las exclusiones por si entra una correa. ESTE AVISO SI LLEVA TOPE DE PRECIO, al contrario que los demas, porque hay 68 unidades en stock y avisar de cada entrada seria ruido: puedes comprar una cualquier dia. Tope en 640 por lo que cuenta el usuario: una Ultra 3 con bateria al 100% se vende hoy a unos 600, y una con correa de titanio vale algo mas, asi que la franja 600-640 puede esconder una ganga con correa buena. Comprobado en fichas reales: el precio NO correlaciona con la bateria (hay unidades al 100% a 568,95 y al 100% a 714,95), asi que las baratas son gangas de verdad y no cacharros gastados. La correa de titanio NO figura en ningun atributo de la ficha: lo unico parecido es un campo 'color' que a veces dice titanio, nada fiable; se ve en la foto, que el aviso ya lleva. Escalones de precio: 568,95 x6 / 628,95 x25 / 684,95 x22 / 714,95 x4. Con tope 600 pasaban 8 de 68; con 640, 36 de 68. La URL original del usuario traia sz=24 y orden por precio, o sea solo las 24 mas baratas de 68: una unidad nueva por encima de ese corte habria sido invisible.",
+      "keywords_todas": [
+        "watch ultra 3"
       ],
-      "precio_max": 600
+      "keywords_ninguna": [
+        "correa",
+        "pulsera",
+        "banda",
+        "funda",
+        "cargador",
+        "cable",
+        "protector",
+        "adaptador",
+        "soporte"
+      ],
+      "precio_max": 640
     },
     {
       "nombre": "iphone-air-1tb",
       "url": "https://www.cashconverters.es/es/es/search/?q=iphone+air&lang=es&sz=500",
       "activa": true,
       "_nota": "Solo el iPhone Air de 1TB. Titulo real: 'apple iphone air 1tb'; las capacidades van en el titulo como 256gb/512gb/1tb. Se busca 'iphone air' (38 unidades, el catalogo entero) en vez de 'iphone air 1tb' (3 unidades) para que el buscador no pueda esconder una unidad segun como trate el token '1tb': eso es justo lo que fallaba con 'macbook air m4'. Cuesta 0,19 MB mas por pasada. El filtro va invertido por lo mismo: se descartan las capacidades menores en vez de exigir '1tb', asi caza tambien un '1024gb', un '2tb' o uno sin capacidad en el titulo, que con el filtro directo se perderian en silencio. Sin precio_max: hoy el 1TB va de 1.019 a 1.060 EUR y un minimo mal puesto solo podria silenciar la ganga.",
-      "keywords_todas": ["iphone air"],
+      "keywords_todas": [
+        "iphone air"
+      ],
       "keywords_ninguna": [
-        "256gb", "512gb", "128gb", "64gb",
-        "funda", "cargador", "cable", "protector", "carcasa", "adaptador"
+        "256gb",
+        "512gb",
+        "128gb",
+        "64gb",
+        "funda",
+        "cargador",
+        "cable",
+        "protector",
+        "carcasa",
+        "adaptador"
       ]
     },
     {
