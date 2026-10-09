@@ -562,6 +562,9 @@ CAMPOS_FICHA = [
     ("Cargador", ("cargador", "cable cargador")),
     ("Chip", ("procesador",)),
     ("Pantalla", ("pulgadas",)),
+    # wifi o 5g. En un iPad es media variante: el modelo con datos cuesta mas,
+    # y sin este campo no habia forma de saberlo salvo leyendo el titulo.
+    ("Conectividad", ("tipo conexion de datos", "tipo de conectividad")),
     ("RAM", ("memoria ram",)),
     ("Almacenamiento", ("capacidad ssd", "capacidad", "capacidad hdd")),
     ("Teclado", ("idioma teclado",)),
@@ -573,7 +576,19 @@ def _formatear_spec(nombre: str, valor: str) -> str:
     """La web da los numeros en crudo: '13.0', '16.0', '1000.0'."""
     numero = _a_float(valor)
     if nombre == "Pantalla" and numero:
+        # Su catalogo tiene datos corruptos: un iPad mini publicado con
+        # "pulgadas: 1.0". Pintar 1" pareceria un fallo nuestro, asi que una
+        # medida imposible se trata como dato ausente y el campo no sale.
+        if numero < 3:
+            return ""
         return f'{numero:g}"'
+    if nombre == "Conectividad":
+        v = normalizar(valor)
+        if "5g" in v or "4g" in v or "lte" in v or "cellular" in v:
+            return "Wi-Fi + datos"
+        if "wifi" in v or "wi-fi" in v:
+            return "solo Wi-Fi"
+        return valor.capitalize()
     if nombre in ("RAM", "Almacenamiento") and numero:
         if numero >= 1000:
             return f"{numero / 1000:g} TB"
@@ -613,13 +628,26 @@ def _campos_de_ficha(ficha: dict) -> list[dict]:
             numero = _a_float(valor)
             if numero == 0:          # "capacidad hdd: 0.0" = no tiene
                 continue
-            campos.append({"name": nombre, "value": _formatear_spec(nombre, valor), "inline": True})
+            texto = _formatear_spec(nombre, valor)
+            # Un formateador puede devolver vacio si el dato es imposible (ver
+            # las pulgadas corruptas). Discord rechaza un campo sin valor, asi
+            # que en ese caso no se pinta el campo.
+            if texto:
+                campos.append({"name": nombre, "value": texto, "inline": True})
             break
     return campos
 
 
-def _embed_de(item: dict, nombre_busqueda: str, detectado: datetime) -> dict:
-    """Un producto -> una tarjeta de Discord con los datos separados en campos."""
+def _embed_de(item: dict, nombre_busqueda: str, detectado: datetime,
+              referencia: str = "") -> dict:
+    """Un producto -> una tarjeta de Discord con los datos separados en campos.
+
+    'referencia' es el precio de mercado que el usuario anota en config.json
+    para esa busqueda. Se pinta arriba porque muchos productos tienen
+    variantes que mueven el precio (un iPad Pro M5 de 13 pulgadas con 5G no
+    se compara con el base de 11 y wifi), y asi el aviso trae la vara de
+    medir dentro en vez de obligar a recordarla.
+    """
     precio = _euros(item.get("precio"))
     antes = item.get("precio_antes")
     if antes and item.get("precio") and antes > item["precio"]:
@@ -649,19 +677,22 @@ def _embed_de(item: dict, nombre_busqueda: str, detectado: datetime) -> dict:
         "footer": {"text": f"Cash Converters · {nombre_busqueda}"},
         "timestamp": detectado.isoformat(),
     }
+    if referencia:
+        embed["description"] = f"📌 Referencia: {referencia}"
     if item.get("imagen"):
         embed["thumbnail"] = {"url": item["imagen"]}
     return embed
 
 
-def avisar(nuevos: list[dict], webhook_url: str, nombre_busqueda: str) -> None:
+def avisar(nuevos: list[dict], webhook_url: str, nombre_busqueda: str,
+           referencia: str = "") -> None:
     detectado = datetime.now(timezone.utc)
     lotes = [nuevos[i:i + EMBEDS_POR_MENSAJE] for i in range(0, len(nuevos), EMBEDS_POR_MENSAJE)]
     for lote in lotes:
         cuantos = f"**{len(lote)} producto{'s' if len(lote) > 1 else ''} nuevo{'s' if len(lote) > 1 else ''}**"
         payload = {
             "content": f"🆕 {cuantos} en `{nombre_busqueda}`",
-            "embeds": [_embed_de(i, nombre_busqueda, detectado) for i in lote],
+            "embeds": [_embed_de(i, nombre_busqueda, detectado, referencia) for i in lote],
         }
         r = creq.post(webhook_url, json=payload, timeout=20)
         if r.status_code == 429:  # rate limit de Discord
@@ -748,7 +779,7 @@ def procesar_busqueda(busqueda: dict, webhook_url: str, modo_dump: bool, modo_se
             if n:
                 time.sleep(1)   # cortesia entre fichas, no tras la ultima
             i["ficha"] = ficha_tecnica(i["url"])
-        avisar(nuevos, webhook_url, nombre)
+        avisar(nuevos, webhook_url, nombre, busqueda.get("referencia", ""))
     return True
 
 

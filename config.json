@@ -101,7 +101,8 @@
         "adaptador",
         "carcasa",
         "protector"
-      ]
+      ],
+      "referencia": "base Wi-Fi 11\" 256 GB con batería al 100% ≈ 850 €. Las variantes de 13\", más capacidad o 5G suben desde ahí."
     },
     {
       "nombre": "macbook-air-m5",
@@ -145,7 +146,7 @@
       "nombre": "apple-watch-ultra-3",
       "url": "https://www.cashconverters.es/es/es/search/?q=apple+watch+ultra+3&lang=es&sz=500",
       "activa": true,
-      "_nota": "Titulo real, identico en las 68 unidades: 'apple watch ultra 3 49mm (gps 5g) titanio'. La busqueda es limpia: los 68 resultados son Ultra 3 y no hay un solo accesorio, pero se dejan las exclusiones por si entra una correa. TOPE EN 550 por decision del usuario: una Ultra 3 con bateria al 100% se vende hoy a unos 600, asi que por debajo de 550 es ganga clara, con correa o sin ella y con la bateria que sea. No se filtra por bateria ni por correa A PROPOSITO: el aviso lleva esos datos y la valoracion la hace el usuario. Comprobado que el precio NO correlaciona con la bateria (hay unidades al 100% a 568,95 y al 100% a 714,95), asi que una barata no implica cacharro gastado. Ojo: con tope 550 hoy no pasa ninguna, porque la mas barata del catalogo esta a 566,05. El silencio es el comportamiento correcto, no una averia: escalones de precio 568,95 x6 / 628,95 x25 / 684,95 x22 / 714,95 x4.",
+      "_nota": "Titulo real, identico en las 68 unidades: 'apple watch ultra 3 49mm (gps 5g) titanio'. SIN TOPE DE PRECIO por decision del usuario: avisar de todo lo que salga y valorar el con los datos delante, antes que perder una ganga por un filtro. Comprobado que no hay riesgo de perdida muda: las 145 unidades de la familia Ultra llevan su numero ('ultra 1' x1, 'ultra 2' x52, 'ultra 3' x68, 'ultra 4' x24), asi que exigir 'watch ultra 3' es seguro. Referencia de mercado del usuario: con bateria al 100%, unos 600 EUR.",
       "keywords_todas": [
         "watch ultra 3"
       ],
@@ -160,7 +161,7 @@
         "adaptador",
         "soporte"
       ],
-      "precio_max": 550
+      "referencia": "con batería al 100% ≈ 600 €."
     },
     {
       "nombre": "iphone-air-1tb",
@@ -185,14 +186,23 @@
     },
     {
       "nombre": "macbook-pro-m5",
-      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro+m5&lang=es&sz=500",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro&lang=es&sz=500",
       "activa": true,
-      "_nota": "Busqueda precisa: hoy devuelve 1 resultado y es un MacBook Pro M5 real. Igual que el M4, cubre tambien un futuro M5 Pro o M5 Max.",
+      "_nota": "MacBook Pro M5 y cualquiera que no se identifique. Filtro INVERTIDO a proposito: se exige 'macbook pro' y se descartan los chips anteriores, en vez de exigir 'm5'. Motivo medido: de las 121 unidades del catalogo, 2 no dicen el chip en el titulo ('macbook pro 2018'), y con el filtro directo esas serian invisibles. Asi pasa un M5, un M5 Pro, un M5 Max, un futuro M6 y cualquiera sin etiquetar. Hoy pasan 4 de 121: los 2 M5 reales y 2 Intel viejos que se cuelan por escribir 'i9' sin 'core'; se excluyen tambien los 'i3/i5/i7/i9' sueltos para recortarlo. Un falso positivo visible es mejor que una perdida muda. La URL pasa a la familia completa ('macbook pro', 121 unidades, 1,38 MB): con 'macbook pro m5' solo llegaban 3 resultados y los no etiquetados no estaban ahi, con lo que el filtro invertido no habria servido de nada.",
       "keywords_todas": [
-        "macbook pro",
-        "m5"
+        "macbook pro"
       ],
       "keywords_ninguna": [
+        "core i",
+        "core 2",
+        "i3",
+        "i5",
+        "i7",
+        "i9",
+        "m1",
+        "m2",
+        "m3",
+        "m4",
         "funda",
         "cargador",
         "cable",
@@ -237,7 +247,8 @@
         "protector",
         "carcasa",
         "adaptador"
-      ]
+      ],
+      "referencia": "base Wi-Fi ≈ 420 €. Las variantes con 5G o más capacidad suben desde ahí."
     },
     {
       "nombre": "sony-a6700",

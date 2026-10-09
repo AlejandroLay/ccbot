@@ -256,7 +256,8 @@ def entorno(tmp_path, monkeypatch):
     monkeypatch.setattr(cc_bot, "descargar", lambda url, intentos=3: _pagina(TILE_CON_REBAJA, TILE_IMG_SRC_ABSOLUTA))
 
     avisos = []
-    monkeypatch.setattr(cc_bot, "avisar", lambda nuevos, url, nombre: avisos.append((nombre, list(nuevos))))
+    monkeypatch.setattr(cc_bot, "avisar",
+                        lambda nuevos, url, nombre, referencia="": avisos.append((nombre, list(nuevos))))
     monkeypatch.setattr(cc_bot, "ficha_tecnica", lambda url: {})
     return tmp_path, avisos
 
@@ -814,29 +815,20 @@ BUSQUEDA_ULTRA_3 = {
     "keywords_todas": ["watch ultra 3"],
     "keywords_ninguna": ["correa", "pulsera", "banda", "funda", "cargador",
                          "cable", "protector", "adaptador", "soporte"],
-    "precio_max": 550,
 }
 
 TITULO_ULTRA_3 = "apple watch ultra 3 49mm (gps 5g) titanio"
 
 
-@pytest.mark.parametrize("precio, avisa", [
-    (480.0, True),
-    (549.0, True),
-    (550.0, True),      # el tope es inclusivo
-    # Por encima de 550 no avisa aunque sea el escalon mas barato del catalogo:
-    # a ~600 se vende una con bateria al 100%, asi que eso no es ganga.
-    (566.05, False),    # la mas barata que hay hoy
-    (628.95, False),
-    (714.95, False),
-])
-def test_el_ultra_3_solo_avisa_si_esta_barato(precio, avisa):
-    assert cc_bot.pasa_filtros(_item(TITULO_ULTRA_3, precio), BUSQUEDA_ULTRA_3) is avisa
+@pytest.mark.parametrize("precio", [480.0, 566.05, 628.95, 714.95, 900.0])
+def test_el_ultra_3_avisa_a_cualquier_precio(precio):
+    """Sin tope por decision del usuario: prefiere verlo todo y valorar el con
+    los datos delante antes que perder una ganga por un filtro."""
+    assert cc_bot.pasa_filtros(_item(TITULO_ULTRA_3, precio), BUSQUEDA_ULTRA_3)
 
 
 def test_el_ultra_3_no_se_filtra_por_bateria_ni_correa():
-    """Decision del usuario: avisar de todo lo que baje de 550 y valorar el
-    estado por su cuenta. El aviso lleva los datos; el filtro no los mira."""
+    """El aviso lleva los datos; el filtro no los mira. La valoracion es suya."""
     barata_y_gastada = {"id": "1", "titulo": TITULO_ULTRA_3, "precio": 499.0,
                         "url": "u", "imagen": None,
                         "ficha": {"porcentaje de bateria": "82.0"}}
@@ -1030,6 +1022,61 @@ def test_formato_de_la_bateria(valor, esperado):
     assert cc_bot._formatear_spec("Batería", valor) == esperado
 
 
+# ---------------------------------------------------------------------------
+# Variante del producto y precio de referencia. Un iPad Pro M5 de 13 pulgadas
+# con 5G no se compara con el base de 11 y wifi, asi que el aviso tiene que
+# decir que variante es y contra que precio compararla.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("valor, esperado", [
+    ("wifi", "solo Wi-Fi"),
+    ("5g", "Wi-Fi + datos"),
+    ("4g", "Wi-Fi + datos"),
+])
+def test_la_conectividad_distingue_la_variante(valor, esperado):
+    assert cc_bot._formatear_spec("Conectividad", valor) == esperado
+
+
+def test_la_conectividad_llega_al_aviso():
+    ficha = {"tipo conexion de datos": "5g", "capacidad": "256.0", "pulgadas": "13.0"}
+    campos = {c["name"]: c["value"] for c in cc_bot._campos_de_ficha(ficha)}
+    assert campos["Conectividad"] == "Wi-Fi + datos"
+    assert campos["Pantalla"] == '13"'
+
+
+def test_una_medida_imposible_no_se_pinta():
+    """Su catalogo trae un iPad mini con 'pulgadas: 1.0'. Pintar 1\\" pareceria
+    un fallo nuestro, asi que el campo se omite."""
+    campos = {c["name"] for c in cc_bot._campos_de_ficha({"pulgadas": "1.0"})}
+    assert "Pantalla" not in campos
+
+
+def test_ningun_campo_llega_vacio_a_discord():
+    """Discord rechaza un campo sin valor: el aviso entero fallaria."""
+    ficha = {"pulgadas": "1.0", "capacidad": "256.0", "tipo conexion de datos": "wifi"}
+    for c in cc_bot._campos_de_ficha(ficha):
+        assert c["value"].strip()
+
+
+def test_el_aviso_lleva_el_precio_de_referencia():
+    from datetime import datetime, timezone
+    item = {"id": "1", "titulo": "ipad pro m5 (wi-fi) (a3357) (11,0) 256gb",
+            "precio": 828.95, "precio_antes": None, "estado": "Perfecto",
+            "url": "u", "imagen": None, "ficha": {}}
+    embed = cc_bot._embed_de(item, "ipad-pro-m5",
+                             datetime(2026, 10, 9, 10, 0, tzinfo=timezone.utc),
+                             referencia="base Wi-Fi 11\" 256 GB ≈ 850 €")
+    assert "850" in embed["description"]
+
+
+def test_sin_referencia_el_aviso_no_lleva_descripcion():
+    from datetime import datetime, timezone
+    item = {"id": "1", "titulo": "algo", "precio": 10.0, "precio_antes": None,
+            "estado": None, "url": "u", "imagen": None, "ficha": {}}
+    embed = cc_bot._embed_de(item, "x", datetime(2026, 10, 9, tzinfo=timezone.utc))
+    assert "description" not in embed
+
+
 def test_sin_applecare_en_la_ficha_no_se_inventa_el_campo():
     """12 de 21 fichas del muestreo no publican el dato. Callar es correcto:
     poner 'No' cuando la web no lo dice seria mentir."""
@@ -1109,3 +1156,44 @@ def test_el_aviso_de_ps5_del_config_real_usa_el_titulo_del_usuario():
     item = {"id": "1", "titulo": "consola ps5 sony playstation 5 pro 2tb",
             "precio": 649.0, "url": "u", "imagen": None}
     assert cc_bot.pasa_filtros(item, ps5), "una PS5 Pro barata tiene que avisar"
+
+
+# ---------------------------------------------------------------------------
+# MacBook Pro M5 con filtro invertido. De las 121 unidades del catalogo, 2 no
+# dicen el chip en el titulo ("portatil apple apple macbook pro 2018"), y con
+# un filtro que exigiese "m5" esas serian invisibles. Se exige la familia y se
+# descartan los chips anteriores.
+# ---------------------------------------------------------------------------
+
+BUSQUEDA_PRO_M5 = {
+    "keywords_todas": ["macbook pro"],
+    "keywords_ninguna": ["core i", "core 2", "i3", "i5", "i7", "i9",
+                         "m1", "m2", "m3", "m4",
+                         "funda", "cargador", "cable", "adaptador",
+                         "teclado", "carcasa", "bateria"],
+}
+
+
+@pytest.mark.parametrize("titulo", [
+    "portatil apple apple macbook pro m5",
+    "portatil apple apple macbook pro m5 (a3434)",
+    "portatil apple apple macbook pro m5 pro 14-core 14",
+    "portatil apple apple macbook pro m6 (futuro chip)",
+    # el caso que motiva la inversion: sin chip en el titulo. Es un falso
+    # positivo asumido, porque la alternativa es perder un M5 sin etiquetar.
+    "portatil apple apple macbook pro 2018",
+])
+def test_el_pro_m5_pasa_tambien_sin_chip_en_el_titulo(titulo):
+    assert cc_bot.pasa_filtros(_item(titulo, 1824.95), BUSQUEDA_PRO_M5)
+
+
+@pytest.mark.parametrize("titulo", [
+    "portatil apple apple macbook pro core i5 2.3 13 (2017) (a1708)",
+    "portatil apple apple macbook pro i9 2.3ghz 16gb ram 1tb ssd",
+    "portatil apple apple macbook pro m1 pro 10-core 3.2 16",
+    "portatil apple apple macbook pro m4 max 16-core 16 (40gpu)",
+    "portatil apple apple macbook air m5 16gb 1tb",      # un Air no es un Pro
+    "funda macbook pro 14",
+])
+def test_el_pro_m5_descarta_los_chips_anteriores(titulo):
+    assert not cc_bot.pasa_filtros(_item(titulo, 1824.95), BUSQUEDA_PRO_M5)
