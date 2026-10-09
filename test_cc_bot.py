@@ -862,6 +862,53 @@ def test_un_ultra_3_sin_precio_legible_avisa_igual():
 
 
 # ---------------------------------------------------------------------------
+# iPad mini 6. El caso mas sucio de todos: la web nombra las generaciones de
+# cuatro formas distintas y 7 de 11 unidades no las indican. El mini 6 se
+# titula "(6 generacion)" o solo con su codigo (a2567/a2568/a2569), y nunca
+# "mini 6". Titulos copiados del catalogo real.
+# ---------------------------------------------------------------------------
+
+BUSQUEDA_MINI_6 = {
+    "keywords_todas": ["ipad mini"],
+    "keywords_ninguna": ["mini 2", "mini 3", "mini 4", "mini 5",
+                         "2 generacion", "3 generacion", "4 generacion",
+                         "5 generacion", "7 generacion",
+                         "a1432", "a1455", "a1489", "a1538", "a1550",
+                         "a2995", "a2996", "a17",
+                         "funda", "teclado", "pencil", "cargador", "cable",
+                         "protector", "carcasa", "adaptador"],
+}
+
+
+@pytest.mark.parametrize("titulo", [
+    # el titulo real de la unidad que hay hoy en el catalogo
+    "ipad apple ipad mini (wi-fi+5g) (a2568) 64gb (8.3) (6 generacion)",
+    # mismo modelo pero sin la generacion en el titulo: el caso que se perderia
+    # con un filtro que exigiese "6 generacion"
+    "ipad apple ipad mini (wi-fi) (a2567) 256gb",
+    "ipad apple ipad mini (6 generacion) (wi-fi) 64gb",
+])
+def test_avisa_del_ipad_mini_6_lo_titulen_como_sea(titulo):
+    assert cc_bot.pasa_filtros(_item(titulo, 385.94), BUSQUEDA_MINI_6)
+
+
+@pytest.mark.parametrize("titulo", [
+    "ipad apple ipad mini 4 (wi-fi) (a1538) 128gb",
+    "ipad apple ipad mini (5 generacion) (wi-fi) (a1538) 256gb",
+    "ipad apple ipad mini (wi-fi+5g) (a2995)(a2996) 256gb (8.3) (7 generacion)",
+    # el mini 7 se cuela si se excluye "a17pro" sin contemplar el espacio:
+    # paso de verdad, con una unidad de 486,95 EUR
+    "ipad apple ipad mini a17 pro",
+    "ipad apple ipad mini a17pro",
+    "ipad apple ipad mini (wi-fi+cellular)(mm) (a1455) 16gb",
+    "funda ipad mini 6",
+    "ipad apple ipad air (a2316) 64gb",      # un Air no es un mini
+])
+def test_descarta_las_demas_generaciones_de_ipad_mini(titulo):
+    assert not cc_bot.pasa_filtros(_item(titulo, 385.94), BUSQUEDA_MINI_6)
+
+
+# ---------------------------------------------------------------------------
 # iPhone Air de 1TB. Titulos reales del catalogo: la capacidad va en el titulo
 # ("apple iphone air 1tb"), asi que se puede filtrar sin abrir la ficha. Se
 # descartan las capacidades menores en vez de exigir "1tb", para que un

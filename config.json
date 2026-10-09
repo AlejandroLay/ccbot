@@ -201,6 +201,42 @@
         "carcasa",
         "bateria"
       ]
+    },
+    {
+      "nombre": "ipad-mini-6",
+      "url": "https://www.cashconverters.es/es/es/search/?q=ipad+mini&lang=es&sz=500",
+      "activa": true,
+      "_nota": "Solo el iPad mini de 6 generacion. OJO con la nomenclatura, que en esta web es un desastre: el mini 6 se titula 'ipad mini (wi-fi+5g) (a2568) 64gb (8.3) (6 generacion)', o sea que NO dice 'mini 6' en ningun sitio. Y de los 11 iPad mini del catalogo, 7 no indican la generacion: unos ponen 'mini 4', otros '(5 generacion)', otros solo el codigo, y uno pone 'a17 pro' a secas. Por eso no se filtra por '6 generacion' (un mini 6 titulado solo con su codigo se perderia en silencio) ni por 'ipad mini 6' (no existe ese texto). Se invierte: se exige 'ipad mini' y se descartan las generaciones conocidas, por nombre y por codigo de modelo. Asi un mini 6 pasa venga titulado como venga, y cuando salga el mini 8 dara un falso positivo visible en vez de un fallo mudo. El chip se excluye como 'a17' y no 'a17pro' porque aparece de las dos formas, con espacio y sin el: con 'a17pro' se colaba un mini 7 de 486,95. Se busca la familia entera ('ipad mini', 11 unidades, 0,74 MB) en vez de 'ipad mini 6' (1 resultado) para no depender de como trate el buscador el '6', que ademas colisiona con los '64gb' de los titulos. Sin tope de precio: hoy solo hay una unidad, a 385,94, y es un modelo escaso.",
+      "keywords_todas": [
+        "ipad mini"
+      ],
+      "keywords_ninguna": [
+        "mini 2",
+        "mini 3",
+        "mini 4",
+        "mini 5",
+        "2 generacion",
+        "3 generacion",
+        "4 generacion",
+        "5 generacion",
+        "7 generacion",
+        "a1432",
+        "a1455",
+        "a1489",
+        "a1538",
+        "a1550",
+        "a2995",
+        "a2996",
+        "a17",
+        "funda",
+        "teclado",
+        "pencil",
+        "cargador",
+        "cable",
+        "protector",
+        "carcasa",
+        "adaptador"
+      ]
     }
   ]
 }
