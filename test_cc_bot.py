@@ -213,8 +213,9 @@ def test_busqueda_sin_filtros_lo_acepta_todo():
 # no sea de los chips viejos conocidos": si algun dia titulan el M4 sin poner
 # el chip, el aviso llega igual (mejor un falso positivo que un fallo mudo).
 BUSQUEDA_M4 = {
-    "keywords_todas": ["macbook air"],
-    "keywords_ninguna": ["core i", "core 2", "m1", "m2", "m3", "m5",
+    "keywords_todas": ["mac"],
+    "keywords_ninguna": ["pro", "core i", "core 2", "m1", "m2", "m3", "m5",
+                         "mac mini", "imac", "mac studio",
                          "funda", "cargador", "cable", "adaptador",
                          "teclado", "carcasa", "bateria", "magic", "raton"],
 }
@@ -592,13 +593,15 @@ def test_sin_estado_no_se_pinta_ese_campo():
 # ---------------------------------------------------------------------------
 
 BUSQUEDA_M3 = {
-    "keywords_todas": ["macbook air", "m3"],
-    "keywords_ninguna": ["core m3", "funda", "cargador", "cable",
+    "keywords_todas": ["mac", "m3"],
+    "keywords_ninguna": ["pro", "core m3", "mac mini", "imac", "mac studio",
+                         "funda", "cargador", "cable",
                          "adaptador", "teclado", "carcasa", "bateria"],
 }
 BUSQUEDA_M2 = {
-    "keywords_todas": ["macbook air", "m2"],
-    "keywords_ninguna": ["funda", "cargador", "cable", "adaptador",
+    "keywords_todas": ["mac", "m2"],
+    "keywords_ninguna": ["pro", "mac mini", "imac", "mac studio",
+                         "funda", "cargador", "cable", "adaptador",
                          "teclado", "carcasa", "bateria"],
 }
 
@@ -1146,8 +1149,9 @@ def test_el_aviso_de_ps5_del_config_real_usa_el_titulo_del_usuario():
 # ---------------------------------------------------------------------------
 
 BUSQUEDA_PRO_M5 = {
-    "keywords_todas": ["macbook pro", "m5"],
-    "keywords_ninguna": ["funda", "cargador", "cable", "adaptador",
+    "keywords_todas": ["mac", "m5"],
+    "keywords_ninguna": ["macbook air", "mac mini", "imac", "mac studio",
+                         "funda", "cargador", "cable", "adaptador",
                          "teclado", "carcasa", "bateria"],
 }
 
@@ -1157,6 +1161,9 @@ BUSQUEDA_PRO_M5 = {
     "portatil apple apple macbook pro m5 (a3434)",
     "portatil apple apple macbook pro m5 pro 14-core 14",      # M5 Pro
     "portatil apple apple macbook pro m5 max 16-core 16",      # M5 Max
+    # El titulo real que el filtro anterior tiraba: la tienda lo publico sin
+    # la palabra "macbook". La web mostraba 3 unidades y el bot veia 2.
+    "pc portatil mac m5 pro",
 ])
 def test_el_pro_m5_cubre_las_tres_variantes_del_chip(titulo):
     assert cc_bot.pasa_filtros(_item(titulo, 1824.95), BUSQUEDA_PRO_M5)
@@ -1168,6 +1175,9 @@ def test_el_pro_m5_cubre_las_tres_variantes_del_chip(titulo):
     "portatil apple apple macbook pro m1 pro 10-core 3.2 16",
     "portatil apple apple macbook pro m4 max 16-core 16 (40gpu)",
     "portatil apple apple macbook air m5 16gb 1tb",   # un Air no es un Pro
+    "ordenador apple apple mac mini m5",              # un sobremesa tampoco
+    "ordenador apple apple mac studio m5 max",
+    "ordenador apple apple imac m5 24",
     "funda macbook pro 14",
 ])
 def test_el_pro_m5_descarta_lo_que_no_es_un_m5(titulo):

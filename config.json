@@ -23,17 +23,21 @@
       "nombre": "macbook-air-m4",
       "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m4&lang=es&sz=500",
       "activa": true,
-      "_nota": "El buscador ignora el token 'm4' y devuelve 300 MacBook antiguos. En vez de exigir 'm4' en el titulo (fallaria en silencio si lo titulan sin el chip), se descartan los chips que tienen aviso propio: pasa cualquier MacBook Air que no sea Intel, M1, M2, M3 ni M5. Asi sigue cazando un M4 aunque no pongan el chip, y de paso un futuro M6.",
+      "_nota": "MacBook Air M4 con filtro invertido: pasa cualquier Air que no sea Intel, M1, M2, M3 ni M5, asi que caza un M4 aunque no pongan el chip, y de paso un futuro M6. OJO al filtro: exige 'mac' y no 'macbook'. Motivo real, encontrado por el usuario el 09/10/2026: la tienda tenia un MacBook Pro M5 titulado 'pc portatil mac m5 pro', sin la palabra 'macbook', y el filtro anterior lo tiraba. La web mostraba 3 unidades y el bot solo veia 2. Con 'mac' entran los dos formatos, y se descarta la otra familia y los sobremesa (mac mini, iMac, Mac Studio) para no mezclar. Comprobado unidad por unidad contra el catalogo: el cambio recupera ese M5 y no añade ni un aviso extra en ninguna de las demas alertas de MacBook.",
       "keywords_todas": [
-        "macbook air"
+        "mac"
       ],
       "keywords_ninguna": [
+        "pro",
         "core i",
         "core 2",
         "m1",
-        "m5",
         "m2",
         "m3",
+        "m5",
+        "mac mini",
+        "imac",
+        "mac studio",
         "funda",
         "cargador",
         "cable",
@@ -49,39 +53,51 @@
       "nombre": "macbook-air-m2",
       "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m2&lang=es&sz=500",
       "activa": true,
-      "_nota": "Exigir 'macbook air' descarta los mac mini ('ordenador apple mac mini m2') y los MacBook Pro, que es todo el ruido que devuelve esta busqueda.",
+      "_nota": "MacBook Air M2. Exigir 'mac' descarta los Mac mini y, con la exclusion de 'pro', los MacBook Pro. OJO al filtro: exige 'mac' y no 'macbook'. Motivo real, encontrado por el usuario el 09/10/2026: la tienda tenia un MacBook Pro M5 titulado 'pc portatil mac m5 pro', sin la palabra 'macbook', y el filtro anterior lo tiraba. La web mostraba 3 unidades y el bot solo veia 2. Con 'mac' entran los dos formatos, y se descarta la otra familia y los sobremesa (mac mini, iMac, Mac Studio) para no mezclar. Comprobado unidad por unidad contra el catalogo: el cambio recupera ese M5 y no añade ni un aviso extra en ninguna de las demas alertas de MacBook.",
       "keywords_todas": [
-        "macbook air",
+        "mac",
         "m2"
       ],
       "keywords_ninguna": [
+        "pro",
+        "mac mini",
+        "imac",
+        "mac studio",
         "funda",
         "cargador",
         "cable",
         "adaptador",
         "teclado",
         "carcasa",
-        "bateria"
+        "bateria",
+        "magic",
+        "raton"
       ]
     },
     {
       "nombre": "macbook-air-m3",
       "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m3&lang=es&sz=500",
       "activa": true,
-      "_nota": "Exigir 'macbook air' descarta los MacBook Pro M3 y, sobre todo, el MacBook de 2017 con procesador Intel 'core m3', que no tiene nada que ver con el chip M3 de Apple.",
+      "_nota": "MacBook Air M3. Exigir 'mac' descarta los Mac mini y, con la exclusion de 'pro', los MacBook Pro y el MacBook de 2017 con Intel 'core m3', que no tiene nada que ver con el chip M3 de Apple. OJO al filtro: exige 'mac' y no 'macbook'. Motivo real, encontrado por el usuario el 09/10/2026: la tienda tenia un MacBook Pro M5 titulado 'pc portatil mac m5 pro', sin la palabra 'macbook', y el filtro anterior lo tiraba. La web mostraba 3 unidades y el bot solo veia 2. Con 'mac' entran los dos formatos, y se descarta la otra familia y los sobremesa (mac mini, iMac, Mac Studio) para no mezclar. Comprobado unidad por unidad contra el catalogo: el cambio recupera ese M5 y no añade ni un aviso extra en ninguna de las demas alertas de MacBook.",
       "keywords_todas": [
-        "macbook air",
+        "mac",
         "m3"
       ],
       "keywords_ninguna": [
+        "pro",
         "core m3",
+        "mac mini",
+        "imac",
+        "mac studio",
         "funda",
         "cargador",
         "cable",
         "adaptador",
         "teclado",
         "carcasa",
-        "bateria"
+        "bateria",
+        "magic",
+        "raton"
       ]
     },
     {
@@ -107,38 +123,50 @@
       "nombre": "macbook-air-m5",
       "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m5&lang=es&sz=500",
       "activa": true,
-      "_nota": "Busqueda precisa: hoy devuelve 1 resultado y es un Air M5 real.",
+      "_nota": "MacBook Air M5. Exigir 'mac' descarta los Mac mini y, con la exclusion de 'pro', los MacBook Pro. OJO al filtro: exige 'mac' y no 'macbook'. Motivo real, encontrado por el usuario el 09/10/2026: la tienda tenia un MacBook Pro M5 titulado 'pc portatil mac m5 pro', sin la palabra 'macbook', y el filtro anterior lo tiraba. La web mostraba 3 unidades y el bot solo veia 2. Con 'mac' entran los dos formatos, y se descarta la otra familia y los sobremesa (mac mini, iMac, Mac Studio) para no mezclar. Comprobado unidad por unidad contra el catalogo: el cambio recupera ese M5 y no añade ni un aviso extra en ninguna de las demas alertas de MacBook.",
       "keywords_todas": [
-        "macbook air",
+        "mac",
         "m5"
       ],
       "keywords_ninguna": [
+        "pro",
+        "mac mini",
+        "imac",
+        "mac studio",
         "funda",
         "cargador",
         "cable",
         "adaptador",
         "teclado",
         "carcasa",
-        "bateria"
+        "bateria",
+        "magic",
+        "raton"
       ]
     },
     {
       "nombre": "macbook-pro-m4",
       "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro+m4&lang=es&sz=500",
       "activa": true,
-      "_nota": "Busqueda precisa: hoy devuelve 1 resultado y es un MacBook Pro M4 Pro real. Filtrar por 'm4' a secas cubre las tres variantes del chip: M4, M4 Pro y M4 Max.",
+      "_nota": "MacBook Pro M4, M4 Pro y M4 Max: 'm4' a secas cubre las tres variantes. OJO al filtro: exige 'mac' y no 'macbook'. Motivo real, encontrado por el usuario el 09/10/2026: la tienda tenia un MacBook Pro M5 titulado 'pc portatil mac m5 pro', sin la palabra 'macbook', y el filtro anterior lo tiraba. La web mostraba 3 unidades y el bot solo veia 2. Con 'mac' entran los dos formatos, y se descarta la otra familia y los sobremesa (mac mini, iMac, Mac Studio) para no mezclar. Comprobado unidad por unidad contra el catalogo: el cambio recupera ese M5 y no añade ni un aviso extra en ninguna de las demas alertas de MacBook.",
       "keywords_todas": [
-        "macbook pro",
+        "mac",
         "m4"
       ],
       "keywords_ninguna": [
+        "macbook air",
+        "mac mini",
+        "imac",
+        "mac studio",
         "funda",
         "cargador",
         "cable",
         "adaptador",
         "teclado",
         "carcasa",
-        "bateria"
+        "bateria",
+        "magic",
+        "raton"
       ]
     },
     {
@@ -186,19 +214,25 @@
       "nombre": "macbook-pro-m5",
       "url": "https://www.cashconverters.es/es/es/search/?q=macbook+pro&lang=es&sz=500",
       "activa": true,
-      "_nota": "MacBook Pro M5, M5 Pro y M5 Max: filtrar por 'm5' a secas cubre las tres variantes. Se busca la familia completa ('macbook pro', 121 unidades, 1,38 MB) en vez de 'macbook pro m5' para que el buscador no pueda esconder una unidad: con la busqueda estrecha solo llegaban 3 resultados. Probe un filtro invertido (exigir la familia y descartar los chips anteriores) para cubrir las 2 unidades del catalogo que no dicen el chip en el titulo, pero dejaba pasar Intel viejos como 'macbook pro 2018' y el usuario prefiere no recibir avisos de productos que no busca. Queda asumido: un M5 listado sin el chip en el titulo no se detectaria.",
+      "_nota": "MacBook Pro M5, M5 Pro y M5 Max: 'm5' a secas cubre las tres variantes. Se busca la familia completa (121 unidades, 1,38 MB) para que el buscador no pueda esconder una unidad. OJO al filtro: exige 'mac' y no 'macbook'. Motivo real, encontrado por el usuario el 09/10/2026: la tienda tenia un MacBook Pro M5 titulado 'pc portatil mac m5 pro', sin la palabra 'macbook', y el filtro anterior lo tiraba. La web mostraba 3 unidades y el bot solo veia 2. Con 'mac' entran los dos formatos, y se descarta la otra familia y los sobremesa (mac mini, iMac, Mac Studio) para no mezclar. Comprobado unidad por unidad contra el catalogo: el cambio recupera ese M5 y no añade ni un aviso extra en ninguna de las demas alertas de MacBook.",
       "keywords_todas": [
-        "macbook pro",
+        "mac",
         "m5"
       ],
       "keywords_ninguna": [
+        "macbook air",
+        "mac mini",
+        "imac",
+        "mac studio",
         "funda",
         "cargador",
         "cable",
         "adaptador",
         "teclado",
         "carcasa",
-        "bateria"
+        "bateria",
+        "magic",
+        "raton"
       ]
     },
     {
