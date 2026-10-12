@@ -21,24 +21,29 @@
     },
     {
       "nombre": "macbook-air-m4",
-      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air+m4&lang=es&sz=500",
+      "url": "https://www.cashconverters.es/es/es/search/?q=macbook+air&lang=es&sz=500",
       "activa": true,
-      "_nota": "MacBook Air M4 con filtro invertido: pasa cualquier Air que no sea Intel, M1, M2, M3 ni M5, asi que caza un M4 aunque no pongan el chip, y de paso un futuro M6. OJO al filtro: exige 'mac' y no 'macbook'. Motivo real, encontrado por el usuario el 09/10/2026: la tienda tenia un MacBook Pro M5 titulado 'pc portatil mac m5 pro', sin la palabra 'macbook', y el filtro anterior lo tiraba. La web mostraba 3 unidades y el bot solo veia 2. Con 'mac' entran los dos formatos, y se descarta la otra familia y los sobremesa (mac mini, iMac, Mac Studio) para no mezclar. Comprobado unidad por unidad contra el catalogo: el cambio recupera ese M5 y no añade ni un aviso extra en ninguna de las demas alertas de MacBook.",
+      "_nota": "MacBook Air M4 con filtro invertido: pasa cualquier Air que no sea Intel, M1, M2, M3 ni M5, asi que caza un M4 aunque no pongan el chip. AVISO IMPORTANTE, fallo real del 12/10/2026: este filtro pedia solo 'mac' y mando 20 avisos basura, entre ellos una maquina de coser ('maquina coser harper mac 5'), un soplador de hojas ('oleo-mac'), una figura de accion ('mac farlane'), cinco copias del videojuego Joe & Mac y un controlador de audio ('ecler mac 4-2t'). Las tres letras 'mac' aparecen en demasiados sitios, y esta alerta no tenia segunda ancla porque es la invertida: las demas piden 'mac' MAS el chip. Ahora pide 'mac' Y 'air'. Se excluyen tambien 'core m' (los MacBook de 2015-2016 con Intel Core M), 'neo' (otra linea de producto, a3404) y 'sleeve' (fundas de cuero). Comprobado: los 104 Air del catalogo llevan su chip, ninguno es M4, y el filtro no descarta ningun Air legitimo.",
       "keywords_todas": [
-        "mac"
+        "mac",
+        "air"
       ],
       "keywords_ninguna": [
         "pro",
         "core i",
         "core 2",
+        "core m",
         "m1",
         "m2",
         "m3",
         "m5",
+        "neo",
+        "airpods",
         "mac mini",
         "imac",
         "mac studio",
         "funda",
+        "sleeve",
         "cargador",
         "cable",
         "adaptador",

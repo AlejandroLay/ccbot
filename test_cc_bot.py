@@ -213,10 +213,10 @@ def test_busqueda_sin_filtros_lo_acepta_todo():
 # no sea de los chips viejos conocidos": si algun dia titulan el M4 sin poner
 # el chip, el aviso llega igual (mejor un falso positivo que un fallo mudo).
 BUSQUEDA_M4 = {
-    "keywords_todas": ["mac"],
-    "keywords_ninguna": ["pro", "core i", "core 2", "m1", "m2", "m3", "m5",
-                         "mac mini", "imac", "mac studio",
-                         "funda", "cargador", "cable", "adaptador",
+    "keywords_todas": ["mac", "air"],
+    "keywords_ninguna": ["pro", "core i", "core 2", "core m", "m1", "m2", "m3", "m5",
+                         "neo", "airpods", "mac mini", "imac", "mac studio",
+                         "funda", "sleeve", "cargador", "cable", "adaptador",
                          "teclado", "carcasa", "bateria", "magic", "raton"],
 }
 
@@ -1182,3 +1182,46 @@ def test_el_pro_m5_cubre_las_tres_variantes_del_chip(titulo):
 ])
 def test_el_pro_m5_descarta_lo_que_no_es_un_m5(titulo):
     assert not cc_bot.pasa_filtros(_item(titulo, 1824.95), BUSQUEDA_PRO_M5)
+
+
+# ---------------------------------------------------------------------------
+# REGRESION del 12/10/2026. La alerta del Air M4 pedia solo "mac" y mando 20
+# avisos basura: una maquina de coser, un soplador de hojas, una figura de
+# accion, cinco copias del videojuego Joe & Mac y un controlador de audio.
+# Las tres letras "mac" aparecen en demasiados sitios, y esa alerta no tenia
+# segunda ancla porque es la invertida (las demas piden "mac" MAS el chip).
+# Estos son los titulos reales que se colaron.
+# ---------------------------------------------------------------------------
+
+BASURA_REAL = [
+    "maquina coser harper mac 5",
+    "soplador oleo-mac bvi 60",
+    "joe & mac: caveman ninja",
+    "joe and mac caveman ninja n-switch",
+    "new joe & mac caveman ninja",
+    "mace griffin: bounty hunter xbox (hv)",
+    "figura accion mac farlane superman the dark knight returns",
+    "controlador ecler mac 4-2t",
+    "disco duro western digital my passport for mac",
+    "otras unidades apple apple macbook leather sleeve",
+    "portatil apple apple macbook neo a3404",
+    "portatil apple apple macbook neo 8gb 512gb a3404",
+    "portatil apple apple macbook core m 1.1 12 (2016) (a1534)",
+]
+
+
+@pytest.mark.parametrize("titulo", BASURA_REAL)
+def test_ninguna_alerta_de_macbook_avisa_de_basura(titulo):
+    """Ni una sola de las seis alertas de MacBook debe dejar pasar esto."""
+    item = _item(titulo, 100.0)
+    for busqueda in (BUSQUEDA_M4, BUSQUEDA_M3, BUSQUEDA_M2, BUSQUEDA_PRO_M5):
+        assert not cc_bot.pasa_filtros(item, busqueda), f"{titulo} pasa el filtro"
+
+
+@pytest.mark.parametrize("titulo", [
+    "portatil apple apple macbook air m4 10-core 4.4 15 (10gpu) (2025)",
+    "portatil apple apple macbook air 13 (2025) (a3240) 16gb",   # sin chip
+    "pc portatil mac m4 air",                                    # titulo raro
+])
+def test_el_air_m4_sigue_cazando_lo_que_debe(titulo):
+    assert cc_bot.pasa_filtros(_item(titulo, 1008.95), BUSQUEDA_M4)
