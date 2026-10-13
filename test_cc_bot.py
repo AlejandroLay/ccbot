@@ -1225,3 +1225,50 @@ def test_ninguna_alerta_de_macbook_avisa_de_basura(titulo):
 ])
 def test_el_air_m4_sigue_cazando_lo_que_debe(titulo):
     assert cc_bot.pasa_filtros(_item(titulo, 1008.95), BUSQUEDA_M4)
+
+
+# ---------------------------------------------------------------------------
+# Detector de recorte silencioso. El catalogo de consolas crecio de 392 a 680
+# unidades y el sz=500 de la URL dejo 180 sin mirar: una PS5 Pro podia estar
+# escondida ahi y nadie se habria enterado. Lo encontre auditando a mano, que
+# es precisamente lo que no se puede garantizar. Ahora lo canta el bot.
+# ---------------------------------------------------------------------------
+
+def _pagina_declarando(n, *tiles):
+    """Como _pagina, pero con el <title> donde la web dice cuantos hay."""
+    return (f"<html><head><title>consola ps5 DE SEGUNDA MANO: {n} productos "
+            f"con 3 años garantía - Cash Converters</title></head>"
+            "<body><div class='product-grid'>" + "".join(tiles) + "</div></body></html>")
+
+
+def test_lee_cuantos_productos_declara_la_web():
+    assert cc_bot.productos_declarados(_pagina_declarando(680)) == 680
+
+
+@pytest.mark.parametrize("html", [
+    "<html><title>sin numero aqui</title></html>",
+    "<html><body>ni title</body></html>",
+])
+def test_si_no_se_puede_leer_el_conteo_devuelve_menos_uno(html):
+    assert cc_bot.productos_declarados(html) == -1
+
+
+def test_un_recorte_silencioso_falla_la_busqueda(entorno, monkeypatch):
+    """La web declara 680 productos y solo extraemos 1: 679 sin mirar."""
+    monkeypatch.setattr(cc_bot, "descargar",
+                        lambda url, intentos=3: _pagina_declarando(680, TILE_CON_REBAJA))
+    assert cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", False, True) is False
+
+
+def test_un_recorte_declarado_como_intencionado_no_falla(entorno, monkeypatch):
+    """ps5-pro coge a proposito las 250 consolas mas caras, no las 680."""
+    monkeypatch.setattr(cc_bot, "descargar",
+                        lambda url, intentos=3: _pagina_declarando(680, TILE_CON_REBAJA))
+    busqueda = dict(BUSQUEDA, cobertura_parcial=True)
+    assert cc_bot.procesar_busqueda(busqueda, "http://webhook", False, True) is True
+
+
+def test_sin_recorte_la_busqueda_va_bien(entorno, monkeypatch):
+    monkeypatch.setattr(cc_bot, "descargar",
+                        lambda url, intentos=3: _pagina_declarando(1, TILE_CON_REBAJA))
+    assert cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", False, True) is True

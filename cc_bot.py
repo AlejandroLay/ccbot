@@ -137,6 +137,22 @@ def descargar(url: str, intentos: int = MAX_REINTENTOS) -> str:
 #   id (str, unico y estable = data-pid), titulo (str), precio (float o None),
 #   url (str), imagen (str o None)
 
+def productos_declarados(html: str) -> int:
+    """Cuantos productos dice la web que hay, segun su propio <title>:
+    'ps5 pro DE SEGUNDA MANO: 8 productos con 3 años garantia'.
+
+    Sirve para pillar un recorte silencioso: si la web declara 680 y nosotros
+    extraemos 500, hay 180 productos que no estamos mirando y una ganga puede
+    estar ahi. Paso de verdad con el catalogo de consolas, que crecio de 392 a
+    680 y dejo el sz=500 corto. Devuelve -1 si no se puede leer.
+    """
+    m = re.search(r"<title>([^<]*)</title>", html, re.IGNORECASE)
+    if not m:
+        return -1
+    n = re.search(r"(\d+)\s+productos", m.group(1))
+    return int(n.group(1)) if n else -1
+
+
 def extraer_productos(html: str) -> list[dict]:
     """Punto de entrada de la extraccion. Prioriza los tiles SFRA (data-pid);
     si la web cambiase y dejasen de aparecer, cae a JSON-LD como plan B.
@@ -730,6 +746,20 @@ def procesar_busqueda(busqueda: dict, webhook_url: str, modo_dump: bool, modo_se
         items = extraer_productos(html)
     except Exception as e:
         log(f"[{nombre}] ERROR extrayendo: {type(e).__name__}: {e}", "ERROR")
+        return False
+
+    # Recorte silencioso: la web declara mas productos de los que hemos
+    # extraido, asi que hay unidades que no estamos mirando. Se avisa como
+    # ERROR salvo que la busqueda diga que el recorte es intencionado (el caso
+    # de ps5-pro, que coge a proposito las 250 consolas mas caras).
+    declarados = productos_declarados(html)
+    if declarados > len(items) and not busqueda.get("cobertura_parcial"):
+        log(
+            f"[{nombre}] ERROR: la web declara {declarados} productos y solo "
+            f"extraemos {len(items)}. Hay {declarados - len(items)} sin mirar: "
+            f"sube el 'sz' de la URL en config.json.",
+            "ERROR",
+        )
         return False
 
     items = [i for i in items if i["id"] and i["id"] != "None"]

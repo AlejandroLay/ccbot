@@ -2,7 +2,7 @@
   "busquedas": [
     {
       "nombre": "ps5-pro",
-      "url": "https://www.cashconverters.es/es/es/search/?q=consola+ps5&lang=es&sz=500",
+      "url": "https://www.cashconverters.es/es/es/search/?q=consola+ps5&lang=es&srule=price-high-to-low&sz=250",
       "activa": true,
       "keywords_todas": [
         "consola",
@@ -17,7 +17,8 @@
         "skin",
         "adhesivo"
       ],
-      "_nota": "Titulo real de una PS5 Pro segun el usuario: 'consola ps5 sony playstation 5 pro 2tb'. Exigir consola+ps5+pro da 0 falsos positivos sobre las 322 consolas del catalogo y deja fuera Slim, Digital Edition, Portal y estandar. Sin filtro de precio A PROPOSITO: con un filtro de titulo tan exacto, un minimo solo podria silenciar la ganga. Se busca sobre el listado completo de consolas (322) en vez de sobre 'ps5 pro' (16 resultados y ninguna consola), para que el orden del buscador no pueda esconder una unidad."
+      "_nota": "Consola PS5 Pro: se exige consola+ps5+pro, que da 0 falsos positivos sobre el catalogo de consolas y deja fuera Slim, Digital Edition, Portal y estandar. Titulo real: 'consola ps5 sony playstation 5 pro 2tb'. VENTANA POR PRECIO, no por catalogo completo: el catalogo de consolas ha crecido de 392 a 680 unidades y con sz=500 se quedaban 180 sin mirar, o sea una PS5 Pro podia estar escondida ahi. En vez de descargar las 680 (4,55 MB por pasada), se ordena por precio descendente y se cogen las 250 mas caras (2,12 MB). El usuario aporta el dato: Cash Converters no va a vender una PS5 Pro por menos de 750 EUR, y la consola mas cara del catalogo hoy esta en 719,95, asi que una PS5 Pro saldria en la PRIMERA posicion. La ventana de 250 llega hasta 594,95 EUR: 155 EUR de margen por debajo del suelo. NO se pone precio_min a proposito: si algun dia se les va la mano y publican una a 700, es la ganga del año y un filtro de precio la silenciaria. cobertura_parcial avisa al bot de que aqui el recorte es intencionado y no debe cantarlo como error.",
+      "cobertura_parcial": true
     },
     {
       "nombre": "macbook-air-m4",
