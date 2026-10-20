@@ -178,8 +178,8 @@
     {
       "nombre": "apple-watch-ultra-3",
       "url": "https://www.cashconverters.es/es/es/search/?q=apple+watch+ultra+3&lang=es&sz=500",
-      "activa": true,
-      "_nota": "Titulo real, identico en las 68 unidades: 'apple watch ultra 3 49mm (gps 5g) titanio'. SIN TOPE DE PRECIO por decision del usuario: avisar de todo lo que salga y valorar el con los datos delante, antes que perder una ganga por un filtro. Comprobado que no hay riesgo de perdida muda: las 145 unidades de la familia Ultra llevan su numero ('ultra 1' x1, 'ultra 2' x52, 'ultra 3' x68, 'ultra 4' x24), asi que exigir 'watch ultra 3' es seguro. Referencia de mercado del usuario: con bateria al 100%, unos 600 EUR.",
+      "activa": false,
+      "_nota": "DESACTIVADA el 20/10/2026 a peticion del usuario. Reactivar es poner 'activa': true; con activa en false el bot ni descarga la pagina. Titulo real, identico en las 68 unidades: 'apple watch ultra 3 49mm (gps 5g) titanio'. SIN TOPE DE PRECIO por decision del usuario: avisar de todo lo que salga y valorar el con los datos delante, antes que perder una ganga por un filtro. Comprobado que no hay riesgo de perdida muda: las 145 unidades de la familia Ultra llevan su numero ('ultra 1' x1, 'ultra 2' x52, 'ultra 3' x68, 'ultra 4' x24), asi que exigir 'watch ultra 3' es seguro. Referencia de mercado del usuario: con bateria al 100%, unos 600 EUR.",
       "keywords_todas": [
         "watch ultra 3"
       ],
