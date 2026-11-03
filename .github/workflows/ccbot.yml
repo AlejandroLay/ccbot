@@ -63,6 +63,9 @@ jobs:
       - name: Vigilar
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          # Respaldo de Vendelio (seccion 6 de cc_bot.py). Sin el secret llega
+          # vacio y ccbot avisa por Discord como siempre.
+          VENDELIO_COTEJO_TOKEN: ${{ secrets.VENDELIO_COTEJO_TOKEN }}
           MINUTOS: ${{ inputs.vigilancia_minutos }}
           INTERVALO: ${{ inputs.intervalo_segundos }}
           SEED: ${{ inputs.seed }}

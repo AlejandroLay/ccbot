@@ -6,6 +6,7 @@ ejemplo que imita los tiles SFRA de cashconverters.es.
 """
 
 import json
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -255,6 +256,9 @@ def entorno(tmp_path, monkeypatch):
     monkeypatch.setattr(cc_bot, "STATE_DIR", tmp_path / "state")
     monkeypatch.setattr(cc_bot, "LOG_FILE", tmp_path / "cc_bot.log")
     monkeypatch.setattr(cc_bot, "descargar", lambda url, intentos=3: _pagina(TILE_CON_REBAJA, TILE_IMG_SRC_ABSOLUTA))
+    # Sin clave de Vendelio: estos tests son el comportamiento de siempre.
+    monkeypatch.setattr(cc_bot, "ENV_FILE", tmp_path / "no-existe.env")
+    monkeypatch.delenv("VENDELIO_COTEJO_TOKEN", raising=False)
 
     avisos = []
     monkeypatch.setattr(cc_bot, "avisar", lambda nuevos, url, nombre: avisos.append((nombre, list(nuevos))))
@@ -1272,3 +1276,159 @@ def test_sin_recorte_la_busqueda_va_bien(entorno, monkeypatch):
     monkeypatch.setattr(cc_bot, "descargar",
                         lambda url, intentos=3: _pagina_declarando(1, TILE_CON_REBAJA))
     assert cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", False, True) is True
+
+
+# ---------------------------------------------------------------------------
+# Respaldo de Vendelio: ccbot pregunta antes de avisar
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def respaldo(entorno, monkeypatch):
+    """Entorno con clave de Vendelio y una respuesta de Vendelio controlable."""
+    tmp_path, _ = entorno
+    monkeypatch.setenv("VENDELIO_COTEJO_TOKEN", "clave")
+    avisos, consultas = [], []
+    monkeypatch.setattr(
+        cc_bot, "avisar",
+        lambda nuevos, url, nombre, rescate="": avisos.append((nombre, {i["id"] for i in nuevos}, rescate)),
+    )
+    vendelio = {"respuesta": {}}
+
+    def cotejar(nombre, productos, token):
+        consultas.append((nombre, [p["pid"] for p in productos]))
+        r = vendelio["respuesta"]
+        return r(productos) if callable(r) else r
+
+    monkeypatch.setattr(cc_bot, "cotejar_con_vendelio", cotejar)
+    return tmp_path, avisos, consultas, vendelio
+
+
+def _todos(veredicto):
+    return lambda productos: {p["pid"]: veredicto for p in productos}
+
+
+def _envejecer_pendientes(tmp_path, minutos):
+    ruta = tmp_path / "state" / "_pendientes.json"
+    datos = json.loads(ruta.read_text())
+    viejo = (datetime.now(timezone.utc) - timedelta(minutes=minutos)).isoformat()
+    for busqueda in datos.values():
+        for pid in busqueda:
+            busqueda[pid] = viejo
+    ruta.write_text(json.dumps(datos))
+
+
+def _pendientes(tmp_path):
+    ruta = tmp_path / "state" / "_pendientes.json"
+    return json.loads(ruta.read_text()).get("prueba", {}) if ruta.exists() else {}
+
+
+def test_respaldo_si_vendelio_ya_aviso_no_se_repite(respaldo):
+    tmp_path, avisos, consultas, vendelio = respaldo
+    vendelio["respuesta"] = _todos("avisado")
+    assert cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == []
+    assert consultas == [("prueba", ["12345", "67890"])]
+    assert _pendientes(tmp_path) == {}
+
+
+def test_respaldo_ignorar_no_avisa(respaldo):
+    tmp_path, avisos, _, vendelio = respaldo
+    vendelio["respuesta"] = _todos("ignorar")
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == []
+    assert _pendientes(tmp_path) == {}
+
+
+def test_respaldo_en_modo_prueba_avisa_como_siempre(respaldo):
+    _, avisos, _, vendelio = respaldo
+    vendelio["respuesta"] = _todos("enviar")
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == [("prueba", {"12345", "67890"}, "")]
+
+
+def test_respaldo_esperar_y_luego_confirmar_no_avisa_nunca(respaldo):
+    tmp_path, avisos, consultas, vendelio = respaldo
+    vendelio["respuesta"] = _todos("esperar")
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == []
+    assert set(_pendientes(tmp_path)) == {"12345", "67890"}
+
+    # En la siguiente pasada ya no son nuevos para ccbot, pero se vuelven a preguntar.
+    vendelio["respuesta"] = _todos("avisado")
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == []
+    assert consultas[-1] == ("prueba", ["12345", "67890"])
+    assert _pendientes(tmp_path) == {}
+
+
+def test_respaldo_rescata_lo_que_vendelio_no_aviso(respaldo):
+    tmp_path, avisos, _, vendelio = respaldo
+    vendelio["respuesta"] = lambda productos: {"12345": "rescatar", "67890": "avisado"}
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == [("prueba", {"12345"}, "Vendelio no aviso de esto")]
+    assert _pendientes(tmp_path) == {}
+
+
+def test_respaldo_si_vendelio_no_contesta_espera_10_minutos_y_rescata(respaldo):
+    tmp_path, avisos, _, vendelio = respaldo
+    vendelio["respuesta"] = None
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == []
+
+    _envejecer_pendientes(tmp_path, 11)
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == [("prueba", {"12345", "67890"}, "Vendelio no responde")]
+    assert _pendientes(tmp_path) == {}
+
+
+def test_respaldo_esperar_tiene_un_tope_de_30_minutos(respaldo):
+    tmp_path, avisos, _, vendelio = respaldo
+    vendelio["respuesta"] = _todos("esperar")
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    _envejecer_pendientes(tmp_path, 20)
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == []
+
+    _envejecer_pendientes(tmp_path, 31)
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == [("prueba", {"12345", "67890"}, "Vendelio no lo ha confirmado en 30 minutos")]
+
+
+def test_respaldo_pendiente_que_ya_no_esta_en_la_tienda_se_olvida(respaldo, monkeypatch):
+    tmp_path, avisos, _, vendelio = respaldo
+    vendelio["respuesta"] = _todos("esperar")
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+
+    # Se vende uno de los dos antes del rescate.
+    monkeypatch.setattr(cc_bot, "descargar", lambda url, intentos=3: _pagina(TILE_CON_REBAJA))
+    vendelio["respuesta"] = _todos("rescatar")
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert len(avisos) == 1 and len(avisos[0][1]) == 1
+    assert _pendientes(tmp_path) == {}
+
+
+def test_respaldo_si_algo_peta_avisa_como_siempre(respaldo, monkeypatch):
+    _, avisos, _, _ = respaldo
+
+    def peta():
+        raise RuntimeError("roto")
+
+    monkeypatch.setattr(cc_bot, "cargar_pendientes", peta)
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert avisos == [("prueba", {"12345", "67890"}, "")]
+
+
+def test_respaldo_seed_no_pregunta_ni_avisa(respaldo):
+    _, avisos, consultas, _ = respaldo
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=True)
+    assert avisos == [] and consultas == []
+
+
+def test_respaldo_sin_nada_nuevo_tambien_da_senales_de_vida(respaldo):
+    _, avisos, consultas, vendelio = respaldo
+    vendelio["respuesta"] = _todos("avisado")
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    cc_bot.procesar_busqueda(BUSQUEDA, "http://webhook", modo_dump=False, modo_seed=False)
+    assert consultas[-1] == ("prueba", [])
+    assert avisos == []
+

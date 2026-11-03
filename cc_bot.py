@@ -85,6 +85,12 @@ def obtener_webhook() -> str:
     return os.environ.get("DISCORD_WEBHOOK_URL") or cargar_env(ENV_FILE).get("DISCORD_WEBHOOK_URL", "")
 
 
+def obtener_token_cotejo() -> str:
+    """Clave para preguntar a Vendelio (ver seccion 6. RESPALDO DE VENDELIO).
+    Sin ella, ccbot avisa por Discord como siempre."""
+    return os.environ.get("VENDELIO_COTEJO_TOKEN") or cargar_env(ENV_FILE).get("VENDELIO_COTEJO_TOKEN", "")
+
+
 def cargar_env(path: Path) -> dict:
     """Parser minimo de un fichero .env (KEY=VALOR), sin dependencias externas."""
     valores = {}
@@ -690,13 +696,15 @@ def _embed_de(item: dict, nombre_busqueda: str, detectado: datetime) -> dict:
     return embed
 
 
-def avisar(nuevos: list[dict], webhook_url: str, nombre_busqueda: str) -> None:
+def avisar(nuevos: list[dict], webhook_url: str, nombre_busqueda: str, rescate: str = "") -> None:
+    """rescate: motivo cuando el aviso es un rescate del respaldo de Vendelio."""
     detectado = datetime.now(timezone.utc)
     lotes = [nuevos[i:i + EMBEDS_POR_MENSAJE] for i in range(0, len(nuevos), EMBEDS_POR_MENSAJE)]
     for lote in lotes:
         cuantos = f"**{len(lote)} producto{'s' if len(lote) > 1 else ''} nuevo{'s' if len(lote) > 1 else ''}**"
+        prefijo = f"🛟 **Rescate de ccbot** ({rescate}) · " if rescate else ""
         payload = {
-            "content": f"🆕 {cuantos} en `{nombre_busqueda}`",
+            "content": f"{prefijo}🆕 {cuantos} en `{nombre_busqueda}`",
             "embeds": [_embed_de(i, nombre_busqueda, detectado) for i in lote],
         }
         r = creq.post(webhook_url, json=payload, timeout=20)
@@ -788,6 +796,14 @@ def procesar_busqueda(busqueda: dict, webhook_url: str, modo_dump: bool, modo_se
         return True
 
     log(f"[{nombre}] {len(items)} extraidos / {len(filtrados)} tras filtros / {len(nuevos)} nuevos")
+    token = obtener_token_cotejo()
+    if token:
+        try:
+            return avisar_con_respaldo(nombre, filtrados, nuevos, webhook_url, token)
+        except Exception as e:
+            # Pase lo que pase con el respaldo, ccbot nunca se calla: vuelve a
+            # avisar como siempre (como mucho, algun aviso llegara repetido).
+            log(f"[{nombre}] Fallo en el respaldo ({type(e).__name__}: {e}); aviso como siempre", "ERROR")
     if nuevos:
         for i in nuevos:
             log(f"[{nombre}]   NUEVO: {i['titulo'][:60]} | {i['precio']} | {i['url']}")
@@ -800,6 +816,146 @@ def procesar_busqueda(busqueda: dict, webhook_url: str, modo_dump: bool, modo_se
             i["ficha"] = ficha_tecnica(i["url"])
         avisar(nuevos, webhook_url, nombre)
     return True
+
+
+# ---------------------------------------------------------------------------
+# 6. RESPALDO DE VENDELIO
+#
+# Vendelio (la app de Alejandro) hace ahora el trabajo de este bot y avisa
+# por Discord. Mientras conviven, ccbot vigila en silencio y, por cada producto
+# que detecta, pregunta a Vendelio si ya aviso. Asi solo llega un aviso por
+# producto y cada uno queda confirmado por dos vigilantes independientes:
+#
+#   avisado  -> Vendelio ya aviso; ccbot no hace nada.
+#   ignorar  -> Alejandro no quiere aviso (lo apago o cambio filtros en Vendelio).
+#   esperar  -> Vendelio aun no lo ha visto; se vuelve a preguntar en 5 minutos.
+#   rescatar -> 10 minutos y Vendelio sin avisar: lo manda ccbot como rescate.
+#   enviar   -> Vendelio esta en modo prueba: ccbot avisa como siempre.
+#
+# Si Vendelio no contesta, ccbot cuenta el tiempo por su cuenta y rescata a los
+# 10 minutos. Lo pendiente se guarda en state/_pendientes.json.
+# ---------------------------------------------------------------------------
+
+COTEJO_URL = "https://vendelio.app/api/integraciones/ccbot/cotejar"
+GRACIA_COTEJO = timedelta(minutes=10)
+# Tope por si Vendelio contestara "esperar" para siempre: nunca mas de esto sin aviso.
+MAXIMO_ESPERA = timedelta(minutes=30)
+
+
+def _pendientes_file() -> Path:
+    return STATE_DIR / "_pendientes.json"
+
+
+def cargar_pendientes() -> dict:
+    ruta = _pendientes_file()
+    if not ruta.exists():
+        return {}
+    try:
+        datos = json.loads(ruta.read_text(encoding="utf-8"))
+        return datos if isinstance(datos, dict) else {}
+    except json.JSONDecodeError:
+        log("pendientes del respaldo corruptos, empiezo de cero", "WARN")
+        return {}
+
+
+def guardar_pendientes(pendientes: dict) -> None:
+    STATE_DIR.mkdir(exist_ok=True)
+    ruta = _pendientes_file()
+    tmp = ruta.with_suffix(".tmp")
+    limpio = {k: v for k, v in pendientes.items() if v}
+    tmp.write_text(json.dumps(limpio, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+    tmp.replace(ruta)
+
+
+def cotejar_con_vendelio(nombre: str, productos: list[dict], token: str):
+    """Veredicto de Vendelio por pid, o None si no contesta bien."""
+    try:
+        r = creq.post(
+            COTEJO_URL,
+            json={"busqueda": nombre, "productos": productos},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=20,
+        )
+        if r.status_code != 200:
+            log(f"[{nombre}] Vendelio respondio {r.status_code} al cotejar", "WARN")
+            return None
+        veredictos = r.json().get("veredictos")
+        return veredictos if isinstance(veredictos, dict) else None
+    except Exception as e:
+        log(f"[{nombre}] No se pudo cotejar con Vendelio ({type(e).__name__}: {e})", "WARN")
+        return None
+
+
+def avisar_con_respaldo(nombre: str, filtrados: list[dict], nuevos: list[dict], webhook_url: str, token: str) -> bool:
+    ahora = datetime.now(timezone.utc)
+    pendientes = cargar_pendientes()
+    mios = dict(pendientes.get(nombre) or {})
+    for i in nuevos:
+        mios.setdefault(i["id"], ahora.isoformat())
+
+    por_pid = {i["id"]: i for i in filtrados}
+    consulta = [
+        {"pid": pid, "titulo": por_pid[pid]["titulo"] if pid in por_pid else "",
+         "precio": por_pid[pid]["precio"] if pid in por_pid else None}
+        for pid in mios
+    ]
+    # Se pregunta aunque no haya nada: asi Vendelio sabe que el respaldo sigue vivo.
+    veredictos = cotejar_con_vendelio(nombre, consulta, token)
+
+    enviar, rescatar = [], {}
+    for pid, desde in list(mios.items()):
+        v = (veredictos or {}).get(pid)
+        try:
+            edad = ahora - datetime.fromisoformat(desde)
+        except (TypeError, ValueError):
+            edad = MAXIMO_ESPERA
+        if v in ("avisado", "ignorar"):
+            del mios[pid]
+            continue
+        if v == "enviar":
+            del mios[pid]
+            if pid in por_pid:
+                enviar.append(por_pid[pid])
+            continue
+        if v == "rescatar":
+            motivo = "Vendelio no aviso de esto"
+        elif v != "esperar" and edad >= GRACIA_COTEJO:
+            motivo = "Vendelio no responde"
+        elif edad >= MAXIMO_ESPERA:
+            motivo = "Vendelio no lo ha confirmado en 30 minutos"
+        else:
+            continue   # se vuelve a preguntar en la proxima pasada
+        del mios[pid]
+        if pid in por_pid:
+            rescatar.setdefault(motivo, []).append(por_pid[pid])
+        else:
+            log(f"[{nombre}] {pid} habia que rescatarlo pero ya no esta en la tienda", "WARN")
+
+    pendientes[nombre] = mios
+    guardar_pendientes(pendientes)
+
+    ok = True
+    for lista, motivo in [(enviar, "")] + [(l, m) for m, l in rescatar.items()]:
+        if not lista:
+            continue
+        for i in lista:
+            etiqueta = f"RESCATE ({motivo})" if motivo else "NUEVO"
+            log(f"[{nombre}]   {etiqueta}: {i['titulo'][:60]} | {i['precio']} | {i['url']}", "WARN" if motivo else "INFO")
+        if not webhook_url:
+            log(f"[{nombre}] DISCORD_WEBHOOK_URL sin configurar, no se puede avisar", "ERROR")
+            ok = False
+            continue
+        for n, i in enumerate(lista[:MAX_FICHAS]):
+            if n:
+                time.sleep(1)
+            i["ficha"] = ficha_tecnica(i["url"])
+        if motivo:
+            avisar(lista, webhook_url, nombre, rescate=motivo)
+        else:
+            avisar(lista, webhook_url, nombre)
+    if mios:
+        log(f"[{nombre}] {len(mios)} pendiente(s) de que Vendelio confirme")
+    return ok
 
 
 # ---------------------------------------------------------------------------
